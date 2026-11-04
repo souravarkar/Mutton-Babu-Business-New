@@ -1,12 +1,13 @@
-
-```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Mutton Babu ERP v7.2 - POS, Customer Purchase History & Messaging</title>
+  <title>Mutton Babu ERP v7.3 - Live Multi-Device Sync</title>
   <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
   <style>
     :root {
       --primary: #8b0000; --primary-hover: #a00000; --secondary: #2c3e50;
@@ -96,11 +97,11 @@
       </div>
       <div>
         <div class="header-title">MUTTON BABU ERP</div>
-        <div class="header-subtitle">v7.2 • Reliable SMS/WhatsApp & Customer Purchase History</div>
+        <div class="header-subtitle">v7.3 • Live Multi-Device Sync • SMS/WhatsApp • Purchase History</div>
       </div>
     </div>
     <div>
-      <span id="syncStatus" class="badge badge-warning">Local Only</span>
+      <span id="syncStatus" class="badge badge-warning" style="cursor:pointer;" onclick="switchTab('settings')" title="Open sync settings">Local Only</span>
       <button class="btn btn-sm btn-secondary" onclick="openDriveAuth()" title="Cloud Sync">☁️ Cloud Drive</button>
     </div>
   </header>
@@ -660,6 +661,31 @@
 
     <!-- SETTINGS & BACKUP TAB -->
     <div id="tab-settings" class="tab-content">
+      <div class="card">
+        <div class="card-title"><span>🔄 Live Multi-Device Sync (Firebase)</span><span class="badge badge-secondary" id="syncInfoBadge">Not connected</span></div>
+        <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:10px;">Connect every phone / desktop with the <strong>same Sync Code</strong>. Any change made on one device appears automatically on all other devices (also works after being offline — it merges when back online).</p>
+        <details style="margin-bottom:12px; font-size:0.85rem;">
+          <summary style="cursor:pointer; font-weight:600; color:var(--info);">One-time setup (free, ~5 minutes)</summary>
+          <ol style="margin:8px 0 0 18px; line-height:1.7;">
+            <li>Open <b>console.firebase.google.com</b> &rarr; Add project (free Spark plan).</li>
+            <li><b>Build &rarr; Realtime Database &rarr; Create Database</b> (any region, start in locked mode).</li>
+            <li><b>Build &rarr; Authentication &rarr; Get started &rarr; Sign-in method &rarr; Anonymous &rarr; Enable.</b></li>
+            <li>Realtime Database &rarr; <b>Rules</b> tab, paste and Publish:<br><code style="background:#f4f4f4; padding:4px 6px; display:block; margin:4px 0;">{ "rules": { "mutton_erp": { ".read": "auth != null", ".write": "auth != null" } } }</code></li>
+            <li>Project settings (gear) &rarr; <b>Your apps &rarr; Web (&lt;/&gt;)</b> &rarr; register app &rarr; copy the <code>firebaseConfig</code> block (must contain <code>databaseURL</code>).</li>
+            <li>Paste it below, choose a long secret Sync Code, press <b>Connect</b>. Repeat steps 5-6 (same config + same code) on every other device.</li>
+          </ol>
+        </details>
+        <div class="form-group"><label>Firebase Config (paste firebaseConfig block)</label><textarea id="syncFirebaseConfig" class="form-control" rows="6" placeholder='{ apiKey: "...", authDomain: "...", databaseURL: "https://xxxx-default-rtdb.firebaseio.com", projectId: "...", appId: "..." }'></textarea></div>
+        <div class="form-group"><label>Sync Code (secret, same on all devices, min 6 chars)</label><input type="text" id="syncCode" class="form-control" placeholder="e.g. muttonbabu-7421-xk92"></div>
+        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+          <button class="btn btn-success" onclick="connectSync()">Connect &amp; Start Live Sync</button>
+          <button class="btn btn-info" onclick="pushNow()">Sync Now</button>
+          <button class="btn btn-danger" onclick="disconnectSync()">Disconnect</button>
+        </div>
+        <div id="syncInfo" style="margin-top:10px; font-size:0.82rem; color:var(--text-muted);"></div>
+        <p style="font-size:0.75rem; color:var(--text-muted); margin-top:8px;">Note: all ERP data (including labour Aadhaar numbers) is stored in your own Firebase project. Keep the Sync Code private. Deleted records stay deleted on all devices; records entered on two devices at once are merged, not overwritten.</p>
+      </div>
+
       <div class="grid-2">
         <div class="card">
           <div class="card-title">Local Data Backup & Restore</div>
@@ -799,6 +825,7 @@
       meta: { driveClientId: '', driveFileId: null, lastBackup: null }
     };
 
+    state.deleted = {};
     let activeOrderType = 'counter';
     let customerRowsCache = [];
     let custSelection = new Set();
@@ -847,12 +874,14 @@
           const parsed = JSON.parse(raw);
           state = { ...state, ...parsed };
           state.meta = { driveClientId: '', driveFileId: null, lastBackup: null, ...(parsed.meta || {}) };
+          state.deleted = state.deleted || {};
           state.msgLogs = state.msgLogs || [];
         } catch (e) { console.error('Error loading stored ERP data:', e); }
       }
       initDefaults();
     }
     function saveState() {
+      schedulePush();
       localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
       renderAll();
     }
@@ -934,11 +963,11 @@
       // Upsert Customer
       let custObj = state.customers.find(c => c.name.trim().toLowerCase() === custName.toLowerCase());
       if (!custObj && custName !== 'Walk-in Customer') {
-        custObj = { id: 'CUST_' + Date.now(), name: custName, phone: phone, whatsapp: phone, tier: tier, address: '', notes: '', createdAt: new Date().toISOString() };
+        custObj = { id: 'CUST_' + Date.now(), name: custName, phone: phone, whatsapp: phone, tier: tier, address: '', notes: '', createdAt: new Date().toISOString(), updatedAt: Date.now() };
         state.customers.push(custObj);
       } else if (custObj) {
         if (phone) { custObj.phone = phone; if (!custObj.whatsapp) custObj.whatsapp = phone; }
-        custObj.tier = tier;
+        custObj.tier = tier; custObj.updatedAt = Date.now();
       }
 
       const sale = {
@@ -1202,6 +1231,10 @@
 
     // ================== RENDER ALL ==================
     function renderAll() {
+      const __keep = snapSelects();
+      try { renderAllInner(); } finally { restoreSelects(__keep); }
+    }
+    function renderAllInner() {
       const derived = computeDerivedBalances();
 
       document.getElementById('kpiCashHand').innerText = `₹${derived.cashInHand.toLocaleString()}`;
@@ -1270,6 +1303,7 @@
     }
     function deleteSale(id) {
       if (confirm('Delete this sale record? Ledger balances will automatically recalculate.')) {
+        tomb(id);
         state.sales = state.sales.filter(s => s.id !== id);
         saveState();
       }
@@ -1343,6 +1377,7 @@
     }
     function deleteDressing(id) {
       if (confirm('Delete livestock batch? Profit & loss metrics will adjust.')) {
+        tomb(id);
         state.dressing = state.dressing.filter(d => d.id !== id);
         saveState();
       }
@@ -1385,6 +1420,7 @@
     }
     function deleteMortality(id) {
       if (confirm('Delete mortality log entry?')) {
+        tomb(id);
         state.livestockDeaths = state.livestockDeaths.filter(m => m.id !== id);
         saveState();
       }
@@ -1602,7 +1638,7 @@
         cust = { id: 'CUST_' + Date.now(), createdAt: new Date().toISOString() };
         state.customers.push(cust);
       }
-      cust.name = name; cust.phone = phone; cust.whatsapp = whatsapp; cust.tier = tier; cust.address = address; cust.notes = notes;
+      cust.name = name; cust.phone = phone; cust.whatsapp = whatsapp; cust.tier = tier; cust.address = address; cust.notes = notes; cust.updatedAt = Date.now();
       saveState();
       ['mcName', 'mcPhone', 'mcWa', 'mcAddress', 'mcNotes'].forEach(id => document.getElementById(id).value = '');
       alert(updated ? 'Existing customer record updated.' : 'Customer added to database.');
@@ -1648,19 +1684,19 @@
         cust = { id: 'CUST_' + Date.now(), createdAt: new Date().toISOString() };
         state.customers.push(cust);
       }
-      cust.name = newName; cust.phone = phone; cust.whatsapp = whatsapp; cust.tier = tier; cust.address = address; cust.notes = notes;
+      cust.name = newName; cust.phone = phone; cust.whatsapp = whatsapp; cust.tier = tier; cust.address = address; cust.notes = notes; cust.updatedAt = Date.now();
 
       const newKey = newName.toLowerCase();
       if (newKey !== key) {
         state.sales.forEach(s => {
           if (s.cust && s.cust.trim().toLowerCase() === key) {
-            s.cust = newName;
+            s.cust = newName; s.updatedAt = Date.now();
             if (!s.phone && phone) s.phone = phone;
           }
         });
         state.receipts.forEach(r => {
           if (r.cust && r.cust.trim().toLowerCase() === key) {
-            r.cust = newName;
+            r.cust = newName; r.updatedAt = Date.now();
             if (!r.phone && phone) r.phone = phone;
           }
         });
@@ -1674,6 +1710,7 @@
       const row = customerRowsCache[i];
       if (!row) return;
       if (!confirm(`Delete "${row.name}" from the customer database?\n\nSales history and khata entries will remain intact.`)) return;
+      state.customers.filter(c => c.name.trim().toLowerCase() === row.key).forEach(c => tomb(c.id));
       state.customers = state.customers.filter(c => c.name.trim().toLowerCase() !== row.key);
       custSelection.delete(row.key);
       saveState();
@@ -1870,6 +1907,7 @@
         </tr>`).join('');
     }
     function deleteCampaignLog(id) {
+      tomb(id);
       state.msgLogs = state.msgLogs.filter(m => m.id !== id);
       saveState();
     }
@@ -1921,6 +1959,7 @@
     }
     function deleteWage(id) {
       if (confirm('Delete wage payment?')) {
+        tomb(id);
         state.wages = state.wages.filter(w => w.id !== id);
         saveState();
       }
@@ -1984,12 +2023,14 @@
     }
     function deleteExpense(id) {
       if (confirm('Delete expense log?')) {
+        tomb(id);
         state.expenses = state.expenses.filter(e => e.id !== id);
         saveState();
       }
     }
     function deleteContra(id) {
       if (confirm('Delete contra transfer?')) {
+        tomb(id);
         state.contraTransfers = state.contraTransfers.filter(c => c.id !== id);
         saveState();
       }
@@ -2119,7 +2160,7 @@
       const actualInput = prompt(`Enter Actual Physical Freezer Stock Weight (Kg):\nSystem Stock Calculated: ${derived.estMeatStock.toFixed(1)} kg`);
       if (actualInput !== null) {
         const actualKg = parseFloat(actualInput) || 0;
-        state.freezerAudits.unshift({
+        state.freezerAudits.unshift({ id: 'AUD_' + Date.now(),
           date: new Date().toISOString().split('T')[0],
           sysKg: derived.estMeatStock,
           actKg: actualKg,
@@ -2183,7 +2224,13 @@
         try {
           const imported = JSON.parse(e.target.result);
           if (confirm('Overwrites current database with backup data. Continue?')) {
+            const oldIds = []; COLLS.forEach(c => (state[c] || []).forEach(r => r && r.id && oldIds.push(r.id)));
+            const oldDeleted = state.deleted || {};
             state = { ...state, ...imported };
+            state.deleted = { ...oldDeleted, ...(imported.deleted || {}) };
+            const newIds = new Set(); COLLS.forEach(c => (state[c] || []).forEach(r => r && r.id && newIds.add(r.id)));
+            newIds.forEach(id => { delete state.deleted[id]; });
+            oldIds.forEach(id => { if (!newIds.has(id)) tomb(id); });
             state.meta = { driveClientId: '', driveFileId: null, lastBackup: null, ...(imported.meta || {}) };
             state.msgLogs = state.msgLogs || [];
             saveState();
@@ -2238,8 +2285,179 @@
     }
     function syncToGoogleDrive() { openDriveAuth(); }
 
+    // ================== LIVE MULTI-DEVICE SYNC (Firebase Realtime Database) ==================
+    const SYNC_KEY = 'mutton_erp_sync_cfg_v1';
+    const COLLS = ['capital','capitalWithdrawals','loans','loanRepayments','dressing','sales','customers','labourers','wages','expenses','contraTransfers','receipts','livestockDeaths','freezerAudits','msgLogs'];
+    let sync = { cfg: null, ref: null, db: null, timer: null, connected: false, started: false, lastSync: null, error: '' };
+
+    function tomb(id) { if (!id) return; state.deleted = state.deleted || {}; state.deleted[id] = Date.now(); }
+    function hashStr(str) { let h = 0; for (let i = 0; i < str.length; i++) h = (h * 31 + str.charCodeAt(i)) | 0; return (h >>> 0).toString(36); }
+    function recTs(r) { const m = /_(\d{10,})/.exec(r.id || ''); return m ? parseInt(m[1], 10) : 0; }
+
+    // Deterministic merge: union of records by id, newest updatedAt wins, tombstones remove deleted records.
+    function mergeStates(a, b) {
+      a = a || {}; b = b || {};
+      const deleted = { ...(a.deleted || {}), ...(b.deleted || {}) };
+      const out = {};
+      COLLS.forEach(c => {
+        const map = new Map();
+        [a[c] || [], b[c] || []].forEach(list => list.forEach(r => {
+          if (!r || typeof r !== 'object') return;
+          if (!r.id) r.id = 'X_' + hashStr(JSON.stringify(r));
+          if (deleted[r.id]) return;
+          const ex = map.get(r.id);
+          if (!ex) { map.set(r.id, r); return; }
+          const ua = ex.updatedAt || 0, ub = r.updatedAt || 0;
+          if (ub > ua || (ub === ua && JSON.stringify(r) > JSON.stringify(ex))) map.set(r.id, r);
+        }));
+        out[c] = Array.from(map.values()).sort((x, y) => (recTs(y) - recTs(x)) || (x.id < y.id ? -1 : 1));
+      });
+      out.deleted = deleted;
+      return out;
+    }
+
+    function snapSelects() {
+      const o = {};
+      ['mortBatchId', 'wageWorkerId', 'repayLoanId'].forEach(id => { const e = document.getElementById(id); if (e) o[id] = e.value; });
+      return o;
+    }
+    function restoreSelects(o) {
+      Object.keys(o).forEach(id => {
+        const e = document.getElementById(id);
+        if (e && o[id] && Array.from(e.options).some(op => op.value === o[id])) e.value = o[id];
+      });
+    }
+
+    function refreshSyncUI() {
+      const badge = document.getElementById('syncStatus');
+      const sb = document.getElementById('syncInfoBadge');
+      const info = document.getElementById('syncInfo');
+      let text, cls;
+      if (!sync.cfg) { text = 'Local Only'; cls = 'badge-warning'; }
+      else if (sync.error) { text = 'Sync Error'; cls = 'badge-danger'; }
+      else if (!sync.started) { text = 'Connecting…'; cls = 'badge-info'; }
+      else if (!sync.connected) { text = 'Offline – will sync'; cls = 'badge-warning'; }
+      else { text = '🟢 Live Synced'; cls = 'badge-success'; }
+      if (badge) { badge.className = 'badge ' + cls; badge.innerText = text; }
+      if (sb) { sb.className = 'badge ' + cls; sb.innerText = sync.cfg ? text : 'Not connected'; }
+      if (info) {
+        let t = sync.cfg ? ('Sync code: <b>' + esc(sync.cfg.code) + '</b>') : 'Not connected. Data is stored only on this device.';
+        if (sync.lastSync) t += ' • Last synced: ' + sync.lastSync.toLocaleTimeString();
+        if (sync.error) t += '<br><span style="color:var(--danger);">Error: ' + esc(sync.error) + '</span>';
+        info.innerHTML = t;
+      }
+    }
+
+    function parseFirebaseConfig(txt) {
+      const a = txt.indexOf('{'), b = txt.lastIndexOf('}');
+      if (a < 0 || b < a) throw new Error('No { } config block found');
+      const body = txt.slice(a, b + 1);
+      try { return JSON.parse(body); } catch (e) { return (new Function('return (' + body + ')'))(); }
+    }
+
+    function connectSync() {
+      let cfg;
+      try { cfg = parseFirebaseConfig(document.getElementById('syncFirebaseConfig').value.trim()); }
+      catch (e) { return alert('Could not read Firebase config: ' + e.message); }
+      if (!cfg || !cfg.databaseURL) return alert('Config must include "databaseURL". Create a Realtime Database in Firebase first, then copy the config again.');
+      const code = document.getElementById('syncCode').value.trim().replace(/[.#$\[\]\/\s]/g, '-');
+      if (code.length < 6) return alert('Sync Code must be at least 6 characters.');
+      sync.cfg = { firebaseConfig: cfg, code };
+      localStorage.setItem(SYNC_KEY, JSON.stringify(sync.cfg));
+      startSync();
+    }
+
+    function initSyncFromStorage() {
+      try { sync.cfg = JSON.parse(localStorage.getItem(SYNC_KEY) || 'null'); } catch (e) { sync.cfg = null; }
+      if (sync.cfg) {
+        document.getElementById('syncFirebaseConfig').value = JSON.stringify(sync.cfg.firebaseConfig, null, 2);
+        document.getElementById('syncCode').value = sync.cfg.code;
+        startSync();
+      }
+      refreshSyncUI();
+    }
+
+    function stopListeners() {
+      clearTimeout(sync.timer);
+      try { if (sync.ref) sync.ref.off(); } catch (e) {}
+      try { if (sync.db) sync.db.ref('.info/connected').off(); } catch (e) {}
+      sync.ref = null; sync.started = false; sync.connected = false;
+    }
+
+    async function startSync() {
+      if (!sync.cfg) return;
+      sync.error = '';
+      if (typeof firebase === 'undefined') { sync.error = 'Firebase library not loaded (check internet connection).'; refreshSyncUI(); return; }
+      stopListeners();
+      refreshSyncUI();
+      try {
+        for (const app of firebase.apps.slice()) await app.delete();
+        firebase.initializeApp(sync.cfg.firebaseConfig);
+        if (firebase.auth) { try { await firebase.auth().signInAnonymously(); } catch (e) { console.warn('Anonymous sign-in skipped:', e.message); } }
+        sync.db = firebase.database();
+        sync.ref = sync.db.ref('mutton_erp/' + sync.cfg.code + '/data');
+        sync.db.ref('.info/connected').on('value', s => { sync.connected = !!s.val(); refreshSyncUI(); });
+        sync.ref.on('value', onRemoteValue, err => { sync.error = err.message; refreshSyncUI(); });
+        sync.started = true;
+        refreshSyncUI();
+      } catch (e) {
+        sync.error = e.message || String(e);
+        refreshSyncUI();
+      }
+    }
+
+    function applyMerged(m) {
+      state = { ...state, ...m };
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      renderAll();
+    }
+
+    function onRemoteValue(snap) {
+      sync.error = '';
+      const raw = snap.val();
+      let remote = null;
+      try { remote = raw ? JSON.parse(raw) : null; } catch (e) { remote = null; }
+      const merged = mergeStates(state, remote);
+      const mergedStr = JSON.stringify(merged);
+      const localStr = JSON.stringify(mergeStates(state, null));
+      if (mergedStr !== localStr) applyMerged(merged);
+      const remoteStr = remote ? JSON.stringify(mergeStates(remote, null)) : '';
+      if (mergedStr !== remoteStr) pushNow();
+      sync.lastSync = new Date();
+      refreshSyncUI();
+    }
+
+    function schedulePush() {
+      if (!sync.ref) return;
+      clearTimeout(sync.timer);
+      sync.timer = setTimeout(pushNow, 700);
+    }
+
+    function pushNow() {
+      if (!sync.ref) { alert('Live sync is not connected yet.'); return; }
+      sync.ref.transaction(cur => {
+        let remote = null;
+        try { remote = cur ? JSON.parse(cur) : null; } catch (e) { remote = null; }
+        return JSON.stringify(mergeStates(state, remote));
+      }, (err) => {
+        if (err) { sync.error = err.message || 'Write failed'; } else { sync.error = ''; sync.lastSync = new Date(); }
+        refreshSyncUI();
+      }, false);
+    }
+
+    function disconnectSync() {
+      if (!confirm('Disconnect live sync on this device? Local data stays on this device and cloud data is not deleted.')) return;
+      stopListeners();
+      sync.cfg = null; sync.error = '';
+      localStorage.removeItem(SYNC_KEY);
+      document.getElementById('syncFirebaseConfig').value = '';
+      document.getElementById('syncCode').value = '';
+      refreshSyncUI();
+    }
+
     // ================== INIT ==================
     window.onload = function() {
+      setTimeout(initSyncFromStorage, 300);
       loadState();
       renderAll();
       applyTierRate();
