@@ -546,15 +546,31 @@
       <div class="grid-2">
         <div class="card">
           <div class="card-title">Partner Capital Injections & Drawings</div>
+          <div style="border:1px solid var(--border); border-radius:6px; padding:12px; margin-bottom:1rem; background:#fafbfc;">
+            <div class="card-title" style="font-size:0.95rem;">👥 Register Partner Names</div>
+            <form id="partnerForm" onsubmit="event.preventDefault(); addPartner();">
+              <div class="form-row">
+                <div class="form-group"><label>Partner Name *</label><input type="text" id="partnerName" class="form-control" placeholder="Full name" required></div>
+                <div class="form-group"><label>Date Joined</label><input type="date" id="partnerDate" class="form-control" required></div>
+                <div class="form-group"><label>Phone (optional)</label><input type="text" id="partnerPhone" class="form-control" placeholder="10-digit"></div>
+              </div>
+              <button type="submit" class="btn btn-secondary btn-block">Add Partner</button>
+            </form>
+            <div class="table-container"><table>
+              <thead><tr><th>Partner</th><th>Joined</th><th>Phone</th><th></th></tr></thead>
+              <tbody id="partnerListBody"><tr><td colspan="4" style="text-align:center;">No partners registered yet.</td></tr></tbody>
+            </table></div>
+          </div>
+
           <form id="capitalForm" onsubmit="event.preventDefault(); addCapitalEntry();">
             <div class="form-row">
               <div class="form-group">
                 <label>Partner Name</label>
-                <select id="capPartner" class="form-control"><option value="Partner A">Partner A</option><option value="Partner B">Partner B</option><option value="Partner C">Partner C</option></select>
+                <select id="capPartner" class="form-control"></select>
               </div>
               <div class="form-group">
                 <label>Transaction Type</label>
-                <select id="capType" class="form-control"><option value="Contribution">Capital Investment (+)</option><option value="Withdrawal">Personal Drawing (-)</option></select>
+                <select id="capType" class="form-control"><option value="Contribution">Cash/Bank Handed to Business – Working Capital (+)</option><option value="Withdrawal">Personal Drawing (-)</option></select>
               </div>
             </div>
             <div class="form-row">
@@ -575,7 +591,7 @@
             <div class="card-title" style="font-size:0.95rem;">Partner Equity Summary</div>
             <div class="table-container">
               <table>
-                <thead><tr><th>Partner</th><th>Net Invested</th><th>Equity Ratio</th></tr></thead>
+                <thead><tr><th>Partner</th><th>Cash/Bank Invested</th><th>Paid CapEx Directly</th><th>Drawings</th><th>Net Invested</th><th>Equity</th></tr></thead>
                 <tbody id="partnerCapitalSummaryBody"></tbody>
               </table>
             </div>
@@ -612,6 +628,89 @@
             <button type="submit" class="btn btn-warning btn-block">Record EMI / Loan Repayment</button>
           </form>
         </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">
+          <span>🏗️ Partner-wise Capital Expenses — who paid what (Pre-Opening)</span>
+          <span class="badge badge-info">Total CapEx: <span id="capexTotalLabel">₹0</span></span>
+        </div>
+        <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:10px;">Select the <strong>partner who paid</strong> and what it was for (e.g. Partner A: freezer &amp; interior, Partner B: rent advance &amp; brokerage, Partner C: working capital). Every item is a <strong>capital investment</strong> credited to that partner's equity and kept out of Profit &amp; Loss. Choose "Business Funds" only if the shop's own Cash/Bank paid it. To hand cash to the business as working capital, use the Capital Investment form above.</p>
+        <form id="capexForm" onsubmit="event.preventDefault(); addCapex();">
+          <div class="form-row">
+            <div class="form-group"><label>Date</label><input type="date" id="capexDate" class="form-control" required></div>
+            <div class="form-group">
+              <label>CapEx Category</label>
+              <select id="capexCategory" class="form-control">
+                <option>Electrical Work</option>
+                <option>Plumbing Work</option>
+                <option>Interior / Carpentry</option>
+                <option>Civil / Tiling / Painting</option>
+                <option>Freezer / Refrigeration</option>
+                <option>Equipment &amp; Tools (Scale, Hooks, Chopping Block)</option>
+                <option>Signboard / Branding</option>
+                <option>Licenses &amp; Registration</option>
+                <option>Shop Rent Advance / Security Deposit</option>
+                <option>Brokerage / Commission</option>
+                <option>Legal / Agreement / Stamp Duty</option>
+                <option>Working Capital (Direct Spend)</option>
+                <option>Other Capital Expense</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label>Vendor / Contractor</label><input type="text" id="capexVendor" class="form-control" placeholder="e.g. Ramesh Electricals"></div>
+            <div class="form-group"><label>Amount (₹)</label><input type="number" id="capexAmount" class="form-control" placeholder="e.g. 15000" required></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Paid By (Partner) *</label>
+              <select id="capexPaidBy" class="form-control" onchange="onCapexPaidByChange()"></select>
+            </div>
+            <div class="form-group">
+              <label>Paid From (business funds only)</label>
+              <select id="capexMode" class="form-control"><option value="Cash">Cash in Hand</option><option value="Bank">Bank Account</option></select>
+            </div>
+            <div class="form-group"><label>Description / Note</label><input type="text" id="capexNote" class="form-control" placeholder="Job details, bill no."></div>
+          </div>
+          <button type="submit" class="btn btn-primary btn-block">Record Capital Expense</button>
+        </form>
+
+        <div class="grid-2" style="margin-top:1rem;">
+          <div>
+            <div class="card-title" style="font-size:0.95rem;">CapEx by Category</div>
+            <div class="table-container"><table>
+              <thead><tr><th>Category</th><th>Total</th></tr></thead>
+              <tbody id="capexSummaryBody"></tbody>
+            </table></div>
+          </div>
+          <div>
+            <div class="card-title" style="font-size:0.95rem;">CapEx Register</div>
+            <div class="table-container" style="max-height:320px; overflow-y:auto;"><table>
+              <thead><tr><th>Date</th><th>Category / Vendor</th><th>Amount</th><th>Paid From</th><th></th></tr></thead>
+              <tbody id="capexTableBody"><tr><td colspan="5" style="text-align:center;">No capital expenses recorded.</td></tr></tbody>
+            </table></div>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title"><span>🧾 Who Paid What — Partner × Category Summary</span></div>
+        <div class="table-container"><table>
+          <thead id="matrixHead"></thead>
+          <tbody id="matrixBody"></tbody>
+        </table></div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">
+          <span>📒 Partner-wise Payment Ledger (every individual payment)</span>
+          <select id="ledgerPartner" class="form-control" style="width:auto;" onchange="renderPartnerLedger()"></select>
+        </div>
+        <div id="ledgerTotals" class="advisor-box" style="margin-bottom:10px;"></div>
+        <div class="table-container" style="max-height:420px; overflow-y:auto;"><table>
+          <thead><tr><th>Date</th><th>Partner</th><th>Type</th><th>Amount</th><th>Account / Details</th><th>Note</th><th></th></tr></thead>
+          <tbody id="ledgerTableBody"></tbody>
+        </table></div>
       </div>
     </div>
 
@@ -808,6 +907,8 @@
     let state = {
       capital: [],
       capitalWithdrawals: [],
+      capex: [],
+      partners: [],
       loans: [],
       loanRepayments: [],
       dressing: [],
@@ -876,6 +977,8 @@
           state.meta = { driveClientId: '', driveFileId: null, lastBackup: null, ...(parsed.meta || {}) };
           state.deleted = state.deleted || {};
           state.msgLogs = state.msgLogs || [];
+          state.capex = state.capex || [];
+          state.partners = state.partners || [];
         } catch (e) { console.error('Error loading stored ERP data:', e); }
       }
       initDefaults();
@@ -887,7 +990,7 @@
     }
     function initDefaults() {
       const today = new Date().toISOString().split('T')[0];
-      ['drDate', 'mortDate', 'wageDate', 'expDate', 'contraDate', 'capDate', 'loanDate', 'repayDate', 'recDate'].forEach(id => {
+      ['drDate', 'mortDate', 'wageDate', 'expDate', 'contraDate', 'capDate', 'loanDate', 'repayDate', 'recDate', 'capexDate', 'partnerDate'].forEach(id => {
         const el = document.getElementById(id);
         if (el && !el.value) el.value = today;
       });
@@ -1190,7 +1293,8 @@
       const expCash = state.expenses.filter(e => e.mode === 'Cash').reduce((sum, e) => sum + e.amount, 0);
       const contraOutFromCash = state.contraTransfers.filter(ct => ct.direction === 'CashToBank').reduce((sum, ct) => sum + ct.amount, 0);
       const loanRepayCash = state.loanRepayments.filter(lr => lr.mode === 'Cash').reduce((sum, lr) => sum + (lr.principal + lr.interest), 0);
-      const cashInHand = (salesCash + khataCash + capCashIn + salvageCash + contraInToCash) - (capWithdrawCash + dressingCash + wagesCash + expCash + contraOutFromCash + loanRepayCash);
+      const capexCash = (state.capex || []).filter(x => x.mode === 'Cash').reduce((sum, x) => sum + x.amount, 0);
+      const cashInHand = (salesCash + khataCash + capCashIn + salvageCash + contraInToCash) - (capWithdrawCash + dressingCash + wagesCash + expCash + contraOutFromCash + loanRepayCash + capexCash);
 
       const salesBank = state.sales.filter(s => s.mode === 'Bank').reduce((sum, s) => sum + s.total, 0);
       const khataBank = state.receipts.filter(r => r.mode === 'Bank').reduce((sum, r) => sum + r.amt, 0);
@@ -1204,7 +1308,8 @@
       const expBank = state.expenses.filter(e => e.mode === 'Bank').reduce((sum, e) => sum + e.amount, 0);
       const contraOutFromBank = state.contraTransfers.filter(ct => ct.direction === 'BankToCash').reduce((sum, ct) => sum + ct.amount, 0);
       const loanRepayBank = state.loanRepayments.filter(lr => lr.mode === 'Bank').reduce((sum, lr) => sum + (lr.principal + lr.interest), 0);
-      const cashInBank = (salesBank + khataBank + capBankIn + loanPrincipalIn + salvageBank + contraInToBank) - (capWithdrawBank + dressingBank + wagesBank + expBank + contraOutFromBank + loanRepayBank);
+      const capexBank = (state.capex || []).filter(x => x.mode === 'Bank').reduce((sum, x) => sum + x.amount, 0);
+      const cashInBank = (salesBank + khataBank + capBankIn + loanPrincipalIn + salvageBank + contraInToBank) - (capWithdrawBank + dressingBank + wagesBank + expBank + contraOutFromBank + loanRepayBank + capexBank);
 
       const totalDressedYield = state.dressing.reduce((sum, d) => sum + d.dressedKg, 0);
       const totalMeatSold = state.sales.reduce((sum, s) => sum + s.qty, 0);
@@ -1226,7 +1331,8 @@
       const totalRepaidPrincipal = state.loanRepayments.reduce((sum, lr) => sum + lr.principal, 0);
       const loanOutstanding = Math.max(0, totalLoans - totalRepaidPrincipal);
 
-      return { cashInHand, cashInBank, estMeatStock, mortalityLossTotal, netProfit, loanOutstanding };
+      const totalCapex = (state.capex || []).reduce((sum, x) => sum + x.amount, 0);
+      return { cashInHand, cashInBank, estMeatStock, mortalityLossTotal, netProfit, loanOutstanding, totalCapex };
     }
 
     // ================== RENDER ALL ==================
@@ -1244,8 +1350,9 @@
       document.getElementById('kpiMortalityLoss').innerText = `₹${derived.mortalityLossTotal.toLocaleString()}`;
       document.getElementById('kpiLoansOutstanding').innerText = `₹${derived.loanOutstanding.toLocaleString()}`;
 
-      const totalNetCap = state.capital.reduce((sum, c) => sum + c.amount, 0) - state.capitalWithdrawals.reduce((sum, c) => sum + c.amount, 0);
-      const capExProgress = totalNetCap > 0 ? Math.min(100, Math.max(0, (derived.netProfit / totalNetCap) * 100)) : 0;
+      const totalNetCap = state.capital.reduce((sum, c) => sum + c.amount, 0) + (state.capex || []).filter(x => x.paidBy).reduce((sum, x) => sum + x.amount, 0) - state.capitalWithdrawals.reduce((sum, c) => sum + c.amount, 0);
+      const recoveryBase = derived.totalCapex > 0 ? derived.totalCapex : totalNetCap;
+      const capExProgress = recoveryBase > 0 ? Math.min(100, Math.max(0, (derived.netProfit / recoveryBase) * 100)) : 0;
       document.getElementById('kpiCapExProgress').innerText = `${capExProgress.toFixed(1)}%`;
       document.getElementById('capExProgressBar').style.width = `${capExProgress}%`;
 
@@ -2044,6 +2151,7 @@
       const amount = parseFloat(document.getElementById('capAmount').value) || 0;
       const mode = document.getElementById('capMode').value;
       const note = document.getElementById('capNote').value.trim();
+      if (!partner) return alert('Register a partner name first.');
       if (amount <= 0) return alert('Enter valid amount.');
       if (type === 'Contribution') {
         state.capital.push({ id: 'CAP_' + Date.now(), partner, date, amount, mode, note });
@@ -2076,25 +2184,178 @@
       document.getElementById('repayPrincipal').value = '';
       document.getElementById('repayInterest').value = '0';
     }
+    function getPartnerNames() {
+      const names = [];
+      const add = n => { n = (n || '').trim(); if (n && !names.some(x => x.toLowerCase() === n.toLowerCase())) names.push(n); };
+      (state.partners || []).slice().sort((a, b) => (a.date || '').localeCompare(b.date || '')).forEach(p => add(p.name));
+      state.capital.forEach(c => add(c.partner));
+      state.capitalWithdrawals.forEach(c => add(c.partner));
+      (state.capex || []).forEach(x => add(x.paidBy));
+      return names;
+    }
+    function addPartner() {
+      const name = document.getElementById('partnerName').value.trim();
+      const date = document.getElementById('partnerDate').value;
+      const phone = cleanPhone(document.getElementById('partnerPhone').value);
+      if (!name) return alert('Enter partner name.');
+      if (getPartnerNames().some(n => n.toLowerCase() === name.toLowerCase())) return alert('A partner with this name already exists.');
+      state.partners = state.partners || [];
+      state.partners.push({ id: 'PART_' + Date.now(), name, date, phone, updatedAt: Date.now() });
+      saveState();
+      document.getElementById('partnerName').value = '';
+      document.getElementById('partnerPhone').value = '';
+    }
+    function deletePartner(id) {
+      const pt = (state.partners || []).find(x => x.id === id);
+      if (!pt) return;
+      if (!confirm('Remove partner "' + pt.name + '" from the list?\nTheir past payments stay in the ledger.')) return;
+      tomb(id);
+      state.partners = state.partners.filter(x => x.id !== id);
+      saveState();
+    }
+    function onCapexPaidByChange() {
+      const pb = document.getElementById('capexPaidBy');
+      const m = document.getElementById('capexMode');
+      if (pb && m) m.disabled = !!pb.value;
+    }
+    function deleteCapitalEntry(id) {
+      if (!confirm('Delete this partner payment entry?')) return;
+      tomb(id);
+      state.capital = state.capital.filter(c => c.id !== id);
+      state.capitalWithdrawals = state.capitalWithdrawals.filter(c => c.id !== id);
+      saveState();
+    }
+    function renderPartnerMatrix() {
+      const head = document.getElementById('matrixHead'), body = document.getElementById('matrixBody');
+      if (!head || !body) return;
+      const partners = getPartnerNames();
+      if (!partners.length) { head.innerHTML = ''; body.innerHTML = '<tr><td style="text-align:center;">Register partners to see the summary.</td></tr>'; return; }
+      const cats = {};
+      const put = (cat, partner, amt) => { (cats[cat] = cats[cat] || {})[partner] = ((cats[cat] || {})[partner] || 0) + amt; };
+      (state.capex || []).filter(x => x.paidBy).forEach(x => put(x.category, x.paidBy, x.amount));
+      state.capital.forEach(c => put('Cash/Bank handed to business (Working Capital)', c.partner, c.amount));
+      state.capitalWithdrawals.forEach(c => put('Less: Personal Drawings', c.partner, -c.amount));
+      const catNames = Object.keys(cats);
+      head.innerHTML = '<tr><th>Category</th>' + partners.map(n => '<th>' + esc(n) + '</th>').join('') + '<th>Total</th></tr>';
+      const colTot = partners.map(() => 0);
+      let rowsHtml = catNames.map(cn => {
+        let rt = 0;
+        const cells = partners.map((n, i) => { const v = cats[cn][n] || 0; rt += v; colTot[i] += v; return '<td>' + (v ? (v < 0 ? '−' : '') + '₹' + Math.abs(v).toLocaleString() : '-') + '</td>'; }).join('');
+        return '<tr><td>' + esc(cn) + '</td>' + cells + '<td><strong>₹' + rt.toLocaleString() + '</strong></td></tr>';
+      }).join('');
+      if (!catNames.length) rowsHtml = '<tr><td colspan="' + (partners.length + 2) + '" style="text-align:center;">No partner payments yet.</td></tr>';
+      const grand = colTot.reduce((a, b) => a + b, 0);
+      body.innerHTML = rowsHtml + '<tr style="border-top:2px solid #ddd; font-weight:700;"><td>NET INVESTED</td>' + colTot.map(v => '<td>₹' + v.toLocaleString() + '</td>').join('') + '<td>₹' + grand.toLocaleString() + '</td></tr>'
+        + '<tr style="font-weight:700; color:var(--info);"><td>Equity %</td>' + colTot.map(v => '<td>' + (grand > 0 ? ((v / grand) * 100).toFixed(1) : '0.0') + '%</td>').join('') + '<td>100%</td></tr>';
+    }
+    function renderPartnerLedger() {
+      const tb = document.getElementById('ledgerTableBody');
+      if (!tb) return;
+      const f = document.getElementById('ledgerPartner').value;
+      const rows = [];
+      state.capital.forEach(c => rows.push({ id: c.id, date: c.date, partner: c.partner, type: 'Capital Investment', amount: c.amount, kind: 'in', detail: c.mode, note: c.note, del: 'deleteCapitalEntry' }));
+      (state.capex || []).filter(x => x.paidBy).forEach(x => rows.push({ id: x.id, date: x.date, partner: x.paidBy, type: 'CapEx Paid: ' + x.category, amount: x.amount, kind: 'capex', detail: x.vendor || '-', note: x.note, del: 'deleteCapex' }));
+      state.capitalWithdrawals.forEach(c => rows.push({ id: c.id, date: c.date, partner: c.partner, type: 'Personal Drawing', amount: c.amount, kind: 'out', detail: c.mode, note: c.note, del: 'deleteCapitalEntry' }));
+      const view = rows.filter(r => !f || r.partner === f).sort((a, b) => new Date(b.date) - new Date(a.date));
+      const sum = k => view.filter(r => r.kind === k).reduce((t, r) => t + r.amount, 0);
+      const inn = sum('in'), cx = sum('capex'), out = sum('out');
+      document.getElementById('ledgerTotals').innerHTML = `<strong>${f ? esc(f) : 'All Partners'}:</strong> Invested ₹${inn.toLocaleString()} + Paid CapEx ₹${cx.toLocaleString()} − Drawings ₹${out.toLocaleString()} = <strong>Net ₹${(inn + cx - out).toLocaleString()}</strong>`;
+      tb.innerHTML = view.length === 0 ? `<tr><td colspan="7" style="text-align:center;">No partner payments recorded.</td></tr>` : view.map(r => `<tr>
+        <td>${esc(r.date)}</td><td><strong>${esc(r.partner)}</strong></td>
+        <td><span class="badge ${r.kind === 'out' ? 'badge-danger' : (r.kind === 'capex' ? 'badge-warning' : 'badge-success')}">${esc(r.type)}</span></td>
+        <td><strong>${r.kind === 'out' ? '−' : '+'}₹${r.amount.toLocaleString()}</strong></td>
+        <td>${esc(r.detail || '-')}</td><td><small>${esc(r.note || '-')}</small></td>
+        <td><button class="btn btn-sm btn-danger" onclick="${r.del}('${r.id}')">🗑️</button></td></tr>`).join('');
+    }
+    function addCapex() {
+      const date = document.getElementById('capexDate').value;
+      const category = document.getElementById('capexCategory').value;
+      const vendor = document.getElementById('capexVendor').value.trim();
+      const amount = parseFloat(document.getElementById('capexAmount').value) || 0;
+      const paidBy = document.getElementById('capexPaidBy').value;
+      const mode = paidBy ? 'Partner' : document.getElementById('capexMode').value;
+      const note = document.getElementById('capexNote').value.trim();
+      if (amount <= 0) return alert('Enter valid capital expense amount.');
+      state.capex = state.capex || [];
+      state.capex.unshift({ id: 'CAPEX_' + Date.now(), date, category, vendor, amount, mode, paidBy, note });
+      saveState();
+      document.getElementById('capexAmount').value = '';
+      document.getElementById('capexVendor').value = '';
+      document.getElementById('capexNote').value = '';
+    }
+    function deleteCapex(id) {
+      if (confirm('Delete this capital expense? Cash/Bank balance will recalculate.')) {
+        tomb(id);
+        state.capex = (state.capex || []).filter(x => x.id !== id);
+        saveState();
+      }
+    }
+    function renderCapex() {
+      const list = state.capex || [];
+      const total = list.reduce((sum, x) => sum + x.amount, 0);
+      const tl = document.getElementById('capexTotalLabel');
+      if (!tl) return;
+      tl.innerText = '₹' + total.toLocaleString();
+      const body = document.getElementById('capexTableBody');
+      const sorted = list.slice().sort((a, b) => new Date(b.date) - new Date(a.date));
+      body.innerHTML = sorted.length === 0
+        ? `<tr><td colspan="5" style="text-align:center;">No capital expenses recorded.</td></tr>`
+        : sorted.map(x => `<tr>
+            <td>${esc(x.date)}</td>
+            <td><strong>${esc(x.category)}</strong>${x.vendor ? '<br><small>' + esc(x.vendor) + '</small>' : ''}${x.note ? '<br><small class="text-muted">' + esc(x.note) + '</small>' : ''}</td>
+            <td><strong>₹${x.amount.toLocaleString()}</strong></td>
+            <td>${x.paidBy ? 'Paid by <strong>' + esc(x.paidBy) + '</strong><br><small class="text-muted">(partner own funds)</small>' : esc(x.mode)}</td>
+            <td><button class="btn btn-sm btn-danger" onclick="deleteCapex('${x.id}')">🗑️</button></td>
+          </tr>`).join('');
+      const cats = {};
+      list.forEach(x => { cats[x.category] = (cats[x.category] || 0) + x.amount; });
+      const keys = Object.keys(cats).sort((a, b) => cats[b] - cats[a]);
+      document.getElementById('capexSummaryBody').innerHTML = keys.length === 0
+        ? `<tr><td colspan="2" style="text-align:center;">-</td></tr>`
+        : keys.map(k => `<tr><td>${esc(k)}</td><td><strong>₹${cats[k].toLocaleString()}</strong></td></tr>`).join('')
+          + `<tr style="border-top:2px solid #ddd;"><td><strong>TOTAL</strong></td><td><strong>₹${total.toLocaleString()}</strong></td></tr>`;
+    }
     function renderCapital() {
-      const partners = ['Partner A', 'Partner B', 'Partner C'];
+      renderCapex();
+      const partners = getPartnerNames();
       let grandNetCap = 0;
       const partnerData = partners.map(p => {
         const capIn = state.capital.filter(c => c.partner === p).reduce((sum, c) => sum + c.amount, 0);
+        const capexPaid = (state.capex || []).filter(x => x.paidBy === p).reduce((sum, x) => sum + x.amount, 0);
         const capOut = state.capitalWithdrawals.filter(c => c.partner === p).reduce((sum, c) => sum + c.amount, 0);
-        const net = capIn - capOut;
+        const net = capIn + capexPaid - capOut;
         grandNetCap += net;
-        return { partner: p, net };
+        return { partner: p, capIn, capexPaid, capOut, net };
       });
-      const summaryBody = document.getElementById('partnerCapitalSummaryBody');
-      summaryBody.innerHTML = partnerData.map(pd => {
-        const ratio = grandNetCap > 0 ? ((pd.net / grandNetCap) * 100).toFixed(1) : '0.0';
-        return `<tr>
-          <td><strong>${pd.partner}</strong></td>
-          <td>₹${pd.net.toLocaleString()}</td>
-          <td><span class="badge badge-info">${ratio}% Equity</span></td>
-        </tr>`;
-      }).join('');
+      document.getElementById('partnerCapitalSummaryBody').innerHTML = partnerData.length === 0
+        ? `<tr><td colspan="6" style="text-align:center;">Register a partner to begin.</td></tr>`
+        : partnerData.map(pd => {
+            const ratio = grandNetCap > 0 ? ((pd.net / grandNetCap) * 100).toFixed(1) : '0.0';
+            return `<tr>
+              <td><strong>${esc(pd.partner)}</strong></td>
+              <td>₹${pd.capIn.toLocaleString()}</td>
+              <td>₹${pd.capexPaid.toLocaleString()}</td>
+              <td>₹${pd.capOut.toLocaleString()}</td>
+              <td><strong>₹${pd.net.toLocaleString()}</strong></td>
+              <td><span class="badge badge-info">${ratio}% Equity</span></td>
+            </tr>`;
+          }).join('');
+
+      const optNone = '<option value="">-- Register a partner first --</option>';
+      document.getElementById('capPartner').innerHTML = partners.length ? partners.map(n => `<option value="${esc(n)}">${esc(n)}</option>`).join('') : optNone;
+      document.getElementById('capexPaidBy').innerHTML = partners.map(n => `<option value="${esc(n)}">${esc(n)}</option>`).join('') + '<option value="">Business Funds (Cash / Bank)</option>';
+      document.getElementById('ledgerPartner').innerHTML = '<option value="">All Partners</option>' + partners.map(n => `<option value="${esc(n)}">${esc(n)}</option>`).join('');
+
+      const plist = state.partners || [];
+      document.getElementById('partnerListBody').innerHTML = plist.length === 0
+        ? `<tr><td colspan="4" style="text-align:center;">No partners registered yet.</td></tr>`
+        : plist.slice().sort((a, b) => (a.date || '').localeCompare(b.date || '')).map(pt => `<tr>
+            <td><strong>${esc(pt.name)}</strong></td><td>${esc(pt.date || '-')}</td><td>${esc(pt.phone || '-')}</td>
+            <td><button class="btn btn-sm btn-danger" onclick="deletePartner('${pt.id}')">🗑️</button></td></tr>`).join('');
+      onCapexPaidByChange();
+      renderPartnerMatrix();
+      renderPartnerLedger();
+
       const loanSelect = document.getElementById('repayLoanId');
       loanSelect.innerHTML = state.loans.map(l => {
         const repaid = state.loanRepayments.filter(r => r.loanId === l.id).reduce((sum, r) => sum + r.principal, 0);
@@ -2233,6 +2494,8 @@
             oldIds.forEach(id => { if (!newIds.has(id)) tomb(id); });
             state.meta = { driveClientId: '', driveFileId: null, lastBackup: null, ...(imported.meta || {}) };
             state.msgLogs = state.msgLogs || [];
+            state.capex = state.capex || [];
+            state.partners = state.partners || [];
             saveState();
             alert('Database restored successfully!');
           }
@@ -2287,7 +2550,7 @@
 
     // ================== LIVE MULTI-DEVICE SYNC (Firebase Realtime Database) ==================
     const SYNC_KEY = 'mutton_erp_sync_cfg_v1';
-    const COLLS = ['capital','capitalWithdrawals','loans','loanRepayments','dressing','sales','customers','labourers','wages','expenses','contraTransfers','receipts','livestockDeaths','freezerAudits','msgLogs'];
+    const COLLS = ['capital','capitalWithdrawals','capex','partners','loans','loanRepayments','dressing','sales','customers','labourers','wages','expenses','contraTransfers','receipts','livestockDeaths','freezerAudits','msgLogs'];
     let sync = { cfg: null, ref: null, db: null, timer: null, connected: false, started: false, lastSync: null, error: '' };
 
     function tomb(id) { if (!id) return; state.deleted = state.deleted || {}; state.deleted[id] = Date.now(); }
@@ -2318,7 +2581,7 @@
 
     function snapSelects() {
       const o = {};
-      ['mortBatchId', 'wageWorkerId', 'repayLoanId'].forEach(id => { const e = document.getElementById(id); if (e) o[id] = e.value; });
+      ['mortBatchId', 'wageWorkerId', 'repayLoanId', 'capPartner', 'capexPaidBy', 'ledgerPartner'].forEach(id => { const e = document.getElementById(id); if (e) o[id] = e.value; });
       return o;
     }
     function restoreSelects(o) {
