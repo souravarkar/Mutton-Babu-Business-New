@@ -1,0 +1,2250 @@
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mutton Babu ERP v7.2 - POS, Customer Purchase History & Messaging</title>
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <style>
+    :root {
+      --primary: #8b0000; --primary-hover: #a00000; --secondary: #2c3e50;
+      --bg: #f4f6f9; --card-bg: #ffffff; --text: #333333; --text-muted: #666666;
+      --border: #e0e0e0; --success: #27ae60; --warning: #f39c12; --danger: #c0392b;
+      --info: #2980b9; --radius: 8px; --shadow: 0 4px 6px rgba(0,0,0,0.05);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+    body { background-color: var(--bg); color: var(--text); padding-bottom: 60px; }
+    header { background: linear-gradient(135deg, #7a0000, #a00000); color: white; padding: 1rem 1.5rem; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 10px rgba(0,0,0,0.2); flex-wrap: wrap; gap: 10px; }
+    .brand-container { display: flex; align-items: center; gap: 12px; }
+    .brand-logo { width: 42px; height: 42px; background: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; color: var(--primary); font-size: 1.2rem; overflow: hidden; }
+    .brand-logo img { width: 100%; height: 100%; object-fit: cover; }
+    .header-title { font-size: 1.4rem; font-weight: 700; }
+    .header-subtitle { font-size: 0.8rem; opacity: 0.85; }
+    nav { background: var(--secondary); display: flex; overflow-x: auto; white-space: nowrap; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+    nav button { background: none; border: none; color: #ecf0f1; padding: 12px 18px; font-size: 0.95rem; cursor: pointer; transition: all 0.2s; border-bottom: 3px solid transparent; }
+    nav button:hover { background: rgba(255,255,255,0.08); color: white; }
+    nav button.active { border-bottom-color: #e74c3c; font-weight: bold; background: rgba(255,255,255,0.12); color: white; }
+    .container { max-width: 1300px; margin: 1.5rem auto; padding: 0 1rem; }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+    .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.2rem; }
+    .grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.2rem; }
+    .grid-4 { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; }
+    .card { background: var(--card-bg); border-radius: var(--radius); padding: 1.25rem; border: 1px solid var(--border); box-shadow: var(--shadow); margin-bottom: 1.2rem; }
+    .card-title { font-size: 1.1rem; font-weight: 700; color: var(--secondary); margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--bg); padding-bottom: 0.5rem; flex-wrap: wrap; gap: 6px; }
+    .kpi-card { background: white; border-radius: var(--radius); padding: 1rem; border-left: 5px solid var(--primary); box-shadow: var(--shadow); }
+    .kpi-title { font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600; }
+    .kpi-value { font-size: 1.5rem; font-weight: 700; color: var(--secondary); margin-top: 4px; }
+    .kpi-sub { font-size: 0.75rem; color: var(--text-muted); margin-top: 4px; }
+    .form-group { margin-bottom: 1rem; }
+    .form-group label { display: block; font-size: 0.85rem; font-weight: 600; color: var(--secondary); margin-bottom: 4px; }
+    .form-control { width: 100%; padding: 9px 12px; border: 1px solid var(--border); border-radius: 6px; font-size: 0.95rem; outline: none; transition: border 0.2s; }
+    .form-control:focus { border-color: var(--primary); }
+    .form-row { display: flex; gap: 0.75rem; flex-wrap: wrap; }
+    .form-row .form-group { flex: 1; min-width: 150px; }
+    .btn { display: inline-block; padding: 9px 16px; font-size: 0.9rem; font-weight: 600; border: none; border-radius: 6px; cursor: pointer; transition: background 0.2s, transform 0.1s; text-align: center; text-decoration: none; }
+    .btn:active { transform: scale(0.98); }
+    .btn-primary { background: var(--primary); color: white; }
+    .btn-primary:hover { background: var(--primary-hover); }
+    .btn-secondary { background: var(--secondary); color: white; }
+    .btn-success { background: var(--success); color: white; }
+    .btn-warning { background: var(--warning); color: white; }
+    .btn-danger { background: var(--danger); color: white; }
+    .btn-info { background: var(--info); color: white; }
+    .btn-sm { padding: 4px 8px; font-size: 0.78rem; border-radius: 4px; }
+    .btn-block { display: block; width: 100%; }
+    .table-container { overflow-x: auto; margin-top: 0.5rem; }
+    table { width: 100%; border-collapse: collapse; text-align: left; font-size: 0.88rem; }
+    th { background: #f8f9fa; color: var(--secondary); font-weight: 700; padding: 10px; border-bottom: 2px solid var(--border); }
+    td { padding: 9px 10px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+    tr:hover { background: #f9f9f9; }
+    .badge { padding: 3px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: 600; display: inline-block; }
+    .badge-success { background: #e8f8f0; color: var(--success); }
+    .badge-warning { background: #fef5e7; color: var(--warning); }
+    .badge-danger { background: #fadbd8; color: var(--danger); }
+    .badge-info { background: #ebf5fb; color: var(--info); }
+    .badge-secondary { background: #eaeded; color: var(--secondary); }
+    .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center; }
+    .modal.active { display: flex; }
+    .modal-content { background: white; border-radius: var(--radius); width: 90%; max-width: 650px; padding: 1.5rem; max-height: 90vh; overflow-y: auto; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
+    .modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 0.75rem; margin-bottom: 1rem; }
+    .modal-title { font-size: 1.1rem; font-weight: 700; color: var(--secondary); }
+    .close-btn { font-size: 1.5rem; border: none; background: none; cursor: pointer; color: var(--text-muted); }
+    .progress-bar-bg { background: #e0e0e0; height: 12px; border-radius: 6px; overflow: hidden; margin-top: 6px; }
+    .progress-bar-fill { background: var(--success); height: 100%; width: 0%; transition: width 0.4s ease; }
+    .advisor-box { background: #ebf5fb; border-left: 4px solid var(--info); padding: 10px 14px; border-radius: 4px; font-size: 0.88rem; color: #1b4f72; margin-bottom: 1rem; }
+    .order-type-selector { display: flex; gap: 8px; margin-bottom: 12px; }
+    .order-type-btn { flex: 1; padding: 8px; border: 1px solid var(--border); background: #f8f9fa; border-radius: 6px; text-align: center; font-size: 0.85rem; cursor: pointer; font-weight: 600; color: var(--secondary); }
+    .order-type-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
+    .chip { display: inline-block; background: #eef2f7; border: 1px solid #cfd8e3; color: #2c3e50; padding: 2px 8px; border-radius: 12px; font-size: 0.75rem; cursor: pointer; margin: 2px 4px 0 0; }
+    .chip:hover { background: #dfe7f1; }
+    .text-muted { color: var(--text-muted); }
+    .link-cust { color: var(--primary); text-decoration: underline; cursor: pointer; font-weight: 600; }
+    .link-cust:hover { color: var(--primary-hover); }
+    @media print { nav, header, .btn, .no-print, .modal { display: none !important; } body { background: white; padding: 0; } .container { max-width: 100%; margin: 0; padding: 0; } .card { border: none; box-shadow: none; padding: 0; } }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="brand-container">
+      <div class="brand-logo" id="shopLogoContainer">
+        <img id="shopLogo" src="logo.png" alt="Logo" onerror="this.style.display='none'; document.getElementById('logoFallback').style.display='block';">
+        <span id="logoFallback" style="display:none;">MB</span>
+      </div>
+      <div>
+        <div class="header-title">MUTTON BABU ERP</div>
+        <div class="header-subtitle">v7.2 • Reliable SMS/WhatsApp & Customer Purchase History</div>
+      </div>
+    </div>
+    <div>
+      <span id="syncStatus" class="badge badge-warning">Local Only</span>
+      <button class="btn btn-sm btn-secondary" onclick="openDriveAuth()" title="Cloud Sync">☁️ Cloud Drive</button>
+    </div>
+  </header>
+
+  <nav>
+    <button class="nav-btn active" onclick="switchTab('dashboard')">Dashboard</button>
+    <button class="nav-btn" onclick="switchTab('pos')">POS & Billing</button>
+    <button class="nav-btn" onclick="switchTab('livestock')">Livestock & Costing</button>
+    <button class="nav-btn" onclick="switchTab('mortality')">Mortality & Loss</button>
+    <button class="nav-btn" onclick="switchTab('khata')">Khata Ledger (Credit)</button>
+    <button class="nav-btn" onclick="switchTab('customers')">Customer Database</button>
+    <button class="nav-btn" onclick="switchTab('labour')">Labour & Wages</button>
+    <button class="nav-btn" onclick="switchTab('expenses')">Expenses & Transfers</button>
+    <button class="nav-btn" onclick="switchTab('capital')">Capital & Loans</button>
+    <button class="nav-btn" onclick="switchTab('reports')">Reports & Analytics</button>
+    <button class="nav-btn" onclick="switchTab('settings')">Settings & Backup</button>
+  </nav>
+
+  <div class="container">
+
+    <!-- DASHBOARD TAB -->
+    <div id="tab-dashboard" class="tab-content active">
+      <div id="strategyAdvisor" class="advisor-box">💡 <strong>Daily Advisor:</strong> Data loading...</div>
+
+      <div class="grid-4 mb-4">
+        <div class="kpi-card" style="border-left-color: #27ae60;"><div class="kpi-title">Cash in Hand</div><div class="kpi-value" id="kpiCashHand">₹0</div><div class="kpi-sub">Ledger Balance</div></div>
+        <div class="kpi-card" style="border-left-color: #2980b9;"><div class="kpi-title">Cash in Bank</div><div class="kpi-value" id="kpiCashBank">₹0</div><div class="kpi-sub">UPI / Account</div></div>
+        <div class="kpi-card" style="border-left-color: #e67e22;"><div class="kpi-title">Est. Meat Stock</div><div class="kpi-value" id="kpiMeatStock">0.0 kg</div><div class="kpi-sub">Dressed - Sold</div></div>
+        <div class="kpi-card" style="border-left-color: #8b0000;"><div class="kpi-title">Cumulative Net Profit</div><div class="kpi-value" id="kpiNetProfit">₹0</div><div class="kpi-sub">All-Time Business Net</div></div>
+      </div>
+
+      <div class="grid-3 mb-4">
+        <div class="kpi-card" style="border-left-color: #c0392b;"><div class="kpi-title">All-Time Mortality Loss</div><div class="kpi-value" id="kpiMortalityLoss">₹0</div><div class="kpi-sub">Unrecovered Deaths</div></div>
+        <div class="kpi-card" style="border-left-color: #8e44ad;"><div class="kpi-title">Outstanding Business Loans</div><div class="kpi-value" id="kpiLoansOutstanding">₹0</div><div class="kpi-sub">Principal Liability</div></div>
+        <div class="kpi-card" style="border-left-color: #16a085;"><div class="kpi-title">CapEx Recovery Progress</div><div class="kpi-value" id="kpiCapExProgress">0%</div><div class="progress-bar-bg"><div class="progress-bar-fill" id="capExProgressBar"></div></div></div>
+      </div>
+
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-title"><span>Freezer Physical Audit Variance</span><button class="btn btn-sm btn-secondary" onclick="logFreezerAudit()">Log Physical Audit</button></div>
+          <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:10px;">Compare system stock vs actual physical freezer weight to catch shrinkage or theft.</p>
+          <div class="table-container">
+            <table>
+              <thead><tr><th>Date</th><th>System Stock</th><th>Physical Stock</th><th>Variance</th></tr></thead>
+              <tbody id="freezerAuditTableBody"><tr><td colspan="4" style="text-align:center;">No audit records logged yet.</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">Business Profit Trend Canvas</div>
+          <canvas id="profitTrendCanvas" width="480" height="200" style="width:100%; border:1px solid #eee; border-radius:4px;"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- POS & BILLING TAB -->
+    <div id="tab-pos" class="tab-content">
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-title">POS Counter Billing</div>
+          <div class="form-group">
+            <label>Order Type</label>
+            <div class="order-type-selector">
+              <div class="order-type-btn active" id="btnTypeCounter" onclick="setOrderType('counter')">🏪 Counter</div>
+              <div class="order-type-btn" id="btnTypeParcel" onclick="setOrderType('parcel')">📦 Parcel Delivery</div>
+              <div class="order-type-btn" id="btnTypeOnline" onclick="setOrderType('online')">🌐 Online Delivery</div>
+            </div>
+          </div>
+
+          <form id="posForm" onsubmit="event.preventDefault(); processPosSale();">
+            <div class="form-row">
+              <div class="form-group"><label>Customer Name</label><input type="text" id="posCust" class="form-control" placeholder="Walk-in / Customer Name" list="customerList"><datalist id="customerList"></datalist></div>
+              <div class="form-group"><label>Mobile No (SMS / WhatsApp)</label><input type="text" id="posPhone" class="form-control" placeholder="10-digit mobile number"></div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label>Rate Tier</label>
+                <select id="posTier" class="form-control" onchange="applyTierRate()">
+                  <option value="Retail">Retail Tier (Standard)</option>
+                  <option value="Regular">Regular Customer Tier</option>
+                  <option value="Wholesale">Wholesale / Hotel Tier</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Item Name</label>
+                <select id="posItem" class="form-control">
+                  <option value="Mutton (Fresh Dressed)">Mutton (Fresh Dressed)</option>
+                  <option value="Mutton Liver / Kaleji">Mutton Liver / Kaleji</option>
+                  <option value="Mutton Head / Siri">Mutton Head / Siri</option>
+                  <option value="Paya / Trotters">Paya / Trotters</option>
+                  <option value="Keema / Minced">Keema / Minced</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group"><label>Quantity (Kg)</label><input type="number" step="0.05" id="posQty" class="form-control" placeholder="e.g. 1.5" required oninput="calcSaleTotal()"></div>
+              <div class="form-group"><label>Rate per Kg (₹)</label><input type="number" step="1" id="posRate" class="form-control" placeholder="750" required oninput="calcSaleTotal()"></div>
+            </div>
+            <div class="form-row" id="deliveryChargeRow" style="display:none;">
+              <div class="form-group"><label style="color:var(--primary);">Parcel / Delivery Charges (₹)</label><input type="number" step="1" id="posDeliveryFee" class="form-control" placeholder="e.g. 40" value="0" oninput="calcSaleTotal()"></div>
+              <div class="form-group"><label>Delivery Provider / Note</label><input type="text" id="posDeliveryNote" class="form-control" placeholder="e.g. Swiggy/Self Parcel"></div>
+            </div>
+            <div class="form-row">
+              <div class="form-group"><label>Total Bill Amount (₹)</label><input type="number" id="posTotal" class="form-control" readonly style="font-weight:700; font-size:1.1rem; color:var(--primary); background:#fff5f5;"></div>
+              <div class="form-group">
+                <label>Payment Mode / Account</label>
+                <select id="posMode" class="form-control">
+                  <option value="Cash">Cash in Hand</option>
+                  <option value="Bank">Bank / UPI Transfer</option>
+                  <option value="Credit">Khata / Credit (Unpaid)</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-group"><label>Bill Note / Special Instructions</label><input type="text" id="posNote" class="form-control" placeholder="Optional invoice note"></div>
+            <button type="submit" class="btn btn-primary btn-block">Complete Sale & Open Invoice Dispatch</button>
+          </form>
+        </div>
+
+        <div class="card">
+          <div class="card-title">Recent Sales Register</div>
+          <div class="table-container" style="max-height: 480px; overflow-y: auto;">
+            <table>
+              <thead><tr><th>Time</th><th>Customer & Type</th><th>Item / Qty</th><th>Delivery</th><th>Total</th><th>Mode</th><th>Actions</th></tr></thead>
+              <tbody id="salesTableBody"><tr><td colspan="7" style="text-align:center;">No sales recorded today.</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- LIVESTOCK & COSTING TAB -->
+    <div id="tab-livestock" class="tab-content">
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-title">Log Goat Batch Purchase & Dressing</div>
+          <form id="dressingForm" onsubmit="event.preventDefault(); addDressingBatch();">
+            <div class="form-row">
+              <div class="form-group"><label>Purchase Date</label><input type="date" id="drDate" class="form-control" required></div>
+              <div class="form-group"><label>Number of Goats</label><input type="number" id="drCount" class="form-control" placeholder="e.g. 5" required onchange="renderGoatGrid()"></div>
+            </div>
+            <div id="goatWeightGridContainer" style="margin-bottom:1rem; max-height:180px; overflow-y:auto; border:1px solid #eee; padding:8px; border-radius:4px;">
+              <small class="text-muted">Enter live & dressed weight per goat after specifying goat count.</small>
+            </div>
+            <div class="form-row">
+              <div class="form-group"><label>Total Batch Live Weight (Kg)</label><input type="number" step="0.1" id="drLiveKg" class="form-control" placeholder="e.g. 150" required></div>
+              <div class="form-group"><label>Total Dressed Meat Yield (Kg)</label><input type="number" step="0.1" id="drDressedKg" class="form-control" placeholder="e.g. 90" required></div>
+            </div>
+            <div class="form-row">
+              <div class="form-group"><label>Goat Purchase Cost (Total ₹)</label><input type="number" id="drPurchaseRs" class="form-control" placeholder="e.g. 45000" required></div>
+              <div class="form-group"><label>Transport & Misc Expenses (₹)</label><input type="number" id="drExpRs" class="form-control" placeholder="e.g. 1500" value="0"></div>
+            </div>
+            <div class="form-row">
+              <div class="form-group"><label>By-Product Recovery Cash (Head/Skin) (₹)</label><input type="number" id="drByProdRs" class="form-control" placeholder="e.g. 2000" value="0"></div>
+              <div class="form-group">
+                <label>Payment Source Account</label>
+                <select id="drPayMode" class="form-control"><option value="Cash">Cash in Hand</option><option value="Bank">Bank Transfer</option></select>
+              </div>
+            </div>
+            <button type="submit" class="btn btn-primary btn-block">Save Batch & Calculate Landed Meat Cost</button>
+          </form>
+        </div>
+
+        <div class="card">
+          <div class="card-title">Livestock Batch Cost Analysis</div>
+          <div class="table-container">
+            <table>
+              <thead><tr><th>Batch ID / Date</th><th>Goats / Dressed Kg</th><th>Yield %</th><th>Net Cost (₹)</th><th>Landed Cost / Kg</th><th>Actions</th></tr></thead>
+              <tbody id="dressingTableBody"><tr><td colspan="6" style="text-align:center;">No livestock batches recorded.</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MORTALITY & LOSS TAB -->
+    <div id="tab-mortality" class="tab-content">
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-title">Log Goat Death / Mortality Event</div>
+          <form id="mortalityForm" onsubmit="event.preventDefault(); addMortalityLoss();">
+            <div class="form-group"><label>Event Date</label><input type="date" id="mortDate" class="form-control" required></div>
+            <div class="form-row">
+              <div class="form-group"><label>Link Purchase Batch</label><select id="mortBatchId" class="form-control"><option value="">-- General Unlinked Loss --</option></select></div>
+              <div class="form-group"><label>Goat Count Lost</label><input type="number" id="mortCount" class="form-control" value="1" min="1" required></div>
+            </div>
+            <div class="form-group"><label>Reason / Disease Cause</label><input type="text" id="mortReason" class="form-control" placeholder="e.g. Transit distress, Bloat, Pneumonia" required></div>
+            <div class="form-row">
+              <div class="form-group"><label>Estimated Value / Purchase Loss (₹)</label><input type="number" id="mortLossValue" class="form-control" placeholder="e.g. 8500" required></div>
+              <div class="form-group"><label>Salvage Meat Recovery Cash (₹)</label><input type="number" id="mortRecoveryAmt" class="form-control" placeholder="0 if total loss" value="0"></div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label>Salvage Deposit Account</label>
+                <select id="mortRecoveryMode" class="form-control"><option value="Cash">Cash in Hand</option><option value="Bank">Bank Account</option></select>
+              </div>
+              <div class="form-group" style="display:flex; align-items:center; margin-top:1.5rem;">
+                <label style="cursor:pointer;"><input type="checkbox" id="mortDeduct" checked> Deduct as Net Profit Loss (prevents double counting)</label>
+              </div>
+            </div>
+            <button type="submit" class="btn btn-danger btn-block">Log Mortality Event</button>
+          </form>
+        </div>
+        <div class="card">
+          <div class="card-title">Mortality Loss Audit Register</div>
+          <div class="table-container">
+            <table>
+              <thead><tr><th>Date</th><th>Batch / Cause</th><th>Est. Loss</th><th>Salvage Rec.</th><th>Net P&L Loss</th><th>Actions</th></tr></thead>
+              <tbody id="mortalityTableBody"><tr><td colspan="6" style="text-align:center;">No mortality events recorded.</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- KHATA LEDGER TAB -->
+    <div id="tab-khata" class="tab-content">
+      <div class="card">
+        <div class="card-title">
+          <span>Hotel & Customer Khata (Credit Register)</span>
+          <button class="btn btn-sm btn-success" onclick="openReceiptModal()">+ Log Credit Collection / Payment Receipt</button>
+        </div>
+        <div class="table-container">
+          <table>
+            <thead><tr><th>Customer / Hotel</th><th>Phone</th><th>Tier</th><th>Total Credit Billed</th><th>Total Payments Received</th><th>Outstanding Balance</th><th>Actions</th></tr></thead>
+            <tbody id="khataTableBody"><tr><td colspan="7" style="text-align:center;">No active customer khata records.</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- CUSTOMER DATABASE TAB -->
+    <div id="tab-customers" class="tab-content">
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-title">Add / Update Customer (Manual Entry)</div>
+          <form onsubmit="event.preventDefault(); saveManualCustomer();">
+            <div class="form-row">
+              <div class="form-group"><label>Customer / Hotel Name *</label><input id="mcName" class="form-control" placeholder="e.g. Ganesh Hotel" required></div>
+              <div class="form-group"><label>Phone (SMS / Calls)</label><input id="mcPhone" class="form-control" placeholder="10-digit mobile"></div>
+            </div>
+            <div class="form-row">
+              <div class="form-group"><label>WhatsApp Number</label><input id="mcWa" class="form-control" placeholder="Defaults to phone"></div>
+              <div class="form-group">
+                <label>Tier</label>
+                <select id="mcTier" class="form-control"><option>Retail</option><option>Regular</option><option>Wholesale</option></select>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group"><label>Address / Area</label><input id="mcAddress" class="form-control" placeholder="Area / delivery landmark"></div>
+              <div class="form-group"><label>Notes</label><input id="mcNotes" class="form-control" placeholder="e.g. Hotel, caterer, prefers keema"></div>
+            </div>
+            <button class="btn btn-primary btn-block">Save Customer to Database</button>
+          </form>
+          <p style="font-size:0.75rem; color:var(--text-muted); margin-top:8px;">POS counter sales automatically create & update customer records here. Entering an existing name updates that record.</p>
+        </div>
+
+        <div class="card">
+          <div class="card-title">Customer Database Summary</div>
+          <div class="grid-2" style="gap:0.75rem;">
+            <div class="kpi-card"><div class="kpi-title">Total Customers</div><div class="kpi-value" id="custStatTotal">0</div></div>
+            <div class="kpi-card" style="border-left-color:#f39c12;"><div class="kpi-title">Messaging Ready</div><div class="kpi-value" id="custStatPhones">0</div></div>
+            <div class="kpi-card" style="border-left-color:#2980b9;"><div class="kpi-title">Hotels / Wholesale</div><div class="kpi-value" id="custStatHotels">0</div></div>
+            <div class="kpi-card" style="border-left-color:#c0392b;"><div class="kpi-title">Total Khata Due</div><div class="kpi-value" id="custStatDue">₹0</div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Customer Database — Bulk Messaging & Purchase Histories</div>
+
+        <div class="form-row" style="margin-bottom:10px;">
+          <div class="form-group" style="margin-bottom:0;"><input id="custSearch" class="form-control" placeholder="🔍 Search name / phone / notes" oninput="renderCustomers()"></div>
+          <div class="form-group" style="margin-bottom:0; max-width:220px;">
+            <select id="custTierFilter" class="form-control" onchange="renderCustomers()">
+              <option value="">All Tiers</option>
+              <option>Retail</option><option>Regular</option><option>Wholesale</option>
+            </select>
+          </div>
+        </div>
+
+        <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:10px;">
+          <label style="font-size:0.85rem; font-weight:600;"><input type="checkbox" id="custSelectAll" onchange="toggleSelectAll(this.checked)"> Select All (filtered)</label>
+          <span class="badge badge-info" id="custSelectedCount">0 selected</span>
+          <button class="btn btn-sm btn-success" onclick="startBulkWhatsApp()">💬 WhatsApp Selected</button>
+          <button class="btn btn-sm btn-warning" onclick="startBulkSms()">📱 SMS Selected</button>
+          <button class="btn btn-sm btn-secondary" onclick="copySelectedNumbers()">📋 Copy Numbers</button>
+        </div>
+
+        <div class="form-group">
+          <label>Broadcast Message <small class="text-muted">— placeholders: {name} {balance} {spend} {orders} {tier}</small></label>
+          <textarea id="bulkMsgText" class="form-control" rows="3" oninput="updateBulkCounter()"></textarea>
+          <div style="margin-top:4px;">
+            <span class="chip" onclick="insertPh('{name}')">{name}</span>
+            <span class="chip" onclick="insertPh('{balance}')">{balance}</span>
+            <span class="chip" onclick="insertPh('{spend}')">{spend}</span>
+            <span class="chip" onclick="insertPh('{orders}')">{orders}</span>
+            <span class="chip" onclick="insertPh('{tier}')">{tier}</span>
+            <span id="bulkMsgCounter" style="float:right; font-size:0.75rem; color:#666;"></span>
+          </div>
+        </div>
+
+        <div class="table-container" style="max-height:460px; overflow-y:auto; margin-top:10px;">
+          <table>
+            <thead>
+              <tr><th style="width:30px;"></th><th>Customer</th><th>Phone</th><th>Tier</th><th>Orders</th><th>Total Spend</th><th>Khata Due</th><th>Last Purchase</th><th>Actions & History</th></tr>
+            </thead>
+            <tbody id="customerTableBody"><tr><td colspan="9" style="text-align:center;">No customers yet. Make a POS sale or add one manually.</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Recent Messaging Campaigns</div>
+        <div class="table-container">
+          <table>
+            <thead><tr><th>Date</th><th>Channel</th><th>Recipients</th><th>Count</th><th>Message Preview</th><th>Actions</th></tr></thead>
+            <tbody id="campaignLogBody"><tr><td colspan="6" style="text-align:center;">No campaigns sent yet.</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- LABOUR & WAGES TAB -->
+    <div id="tab-labour" class="tab-content">
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-title">Worker Registration & Wages Entry</div>
+          <form id="workerRegForm" onsubmit="event.preventDefault(); registerWorker();" style="border-bottom: 1px solid #eee; padding-bottom: 1rem; margin-bottom: 1rem;">
+            <div class="form-row">
+              <div class="form-group"><label>Worker Full Name</label><input type="text" id="labourName" class="form-control" placeholder="Name" required></div>
+              <div class="form-group"><label>Phone Number</label><input type="text" id="labourPhone" class="form-control" placeholder="10-digit phone"></div>
+            </div>
+            <div class="form-row">
+              <div class="form-group"><label>Aadhaar Number</label><input type="text" id="labourAadhaar" class="form-control" placeholder="12-digit Aadhaar"></div>
+              <div class="form-group">
+                <label>KYC Status</label>
+                <select id="labourVerify" class="form-control"><option value="Verified">Verified Document</option><option value="Pending">Pending Verification</option></select>
+              </div>
+            </div>
+            <button type="submit" class="btn btn-secondary btn-block">Add Worker to Roster</button>
+          </form>
+
+          <form id="wageForm" onsubmit="event.preventDefault(); addWagePayment();">
+            <div class="form-row">
+              <div class="form-group"><label>Select Worker</label><select id="wageWorkerId" class="form-control" required></select></div>
+              <div class="form-group"><label>Date</label><input type="date" id="wageDate" class="form-control" required></div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label>Payment Type</label>
+                <select id="wageType" class="form-control"><option value="Daily Wage">Daily Wage</option><option value="Advance">Advance Payout</option><option value="Bonus / Overtime">Bonus / Overtime</option></select>
+              </div>
+              <div class="form-group"><label>Amount (₹)</label><input type="number" id="wageAmount" class="form-control" placeholder="e.g. 600" required></div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label>Payment Mode Account</label>
+                <select id="wageMode" class="form-control"><option value="Cash">Cash in Hand</option><option value="Bank">Bank Account</option></select>
+              </div>
+              <div class="form-group"><label>Notes</label><input type="text" id="wageNote" class="form-control" placeholder="Optional notes"></div>
+            </div>
+            <button type="submit" class="btn btn-primary btn-block">Record Wage Payment</button>
+          </form>
+        </div>
+
+        <div class="card">
+          <div class="card-title">Labour Wages Register</div>
+          <div class="table-container">
+            <table>
+              <thead><tr><th>Date</th><th>Worker</th><th>Type</th><th>Amount</th><th>Mode</th><th>Actions</th></tr></thead>
+              <tbody id="wagesTableBody"><tr><td colspan="6" style="text-align:center;">No wage payments recorded.</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- EXPENSES & CONTRA TAB -->
+    <div id="tab-expenses" class="tab-content">
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-title">Log Shop Expense</div>
+          <form id="expForm" onsubmit="event.preventDefault(); addExpense();">
+            <div class="form-row">
+              <div class="form-group"><label>Date</label><input type="date" id="expDate" class="form-control" required></div>
+              <div class="form-group">
+                <label>Category</label>
+                <select id="expCategory" class="form-control">
+                  <option value="Rent">Shop Rent</option>
+                  <option value="Electricity">Electricity / Power</option>
+                  <option value="Ice & Cold Storage">Ice & Cold Storage</option>
+                  <option value="Cleaning & Sanitation">Cleaning & Sanitation</option>
+                  <option value="Packaging & Bags">Packaging & Bags</option>
+                  <option value="Tea & Refreshments">Tea & Refreshments</option>
+                  <option value="Misc Equipment">Tools & Sharpening</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group"><label>Amount (₹)</label><input type="number" id="expAmount" class="form-control" placeholder="e.g. 500" required></div>
+              <div class="form-group">
+                <label>Paid From</label>
+                <select id="expMode" class="form-control"><option value="Cash">Cash in Hand</option><option value="Bank">Bank Account</option></select>
+              </div>
+            </div>
+            <div class="form-group"><label>Description / Note</label><input type="text" id="expNote" class="form-control" placeholder="Expense particulars"></div>
+            <button type="submit" class="btn btn-primary btn-block">Record Shop Expense</button>
+          </form>
+        </div>
+
+        <div class="card">
+          <div class="card-title">Cash ⇄ Bank Contra Transfer</div>
+          <form id="contraForm" onsubmit="event.preventDefault(); addContraTransfer();">
+            <div class="form-group"><label>Transfer Date</label><input type="date" id="contraDate" class="form-control" required></div>
+            <div class="form-group">
+              <label>Transfer Direction</label>
+              <select id="contraDirection" class="form-control">
+                <option value="CashToBank">Cash Deposit to Bank (Cash ➔ Bank)</option>
+                <option value="BankToCash">ATM Cash Withdrawal (Bank ➔ Cash)</option>
+              </select>
+            </div>
+            <div class="form-group"><label>Transfer Amount (₹)</label><input type="number" id="contraAmount" class="form-control" placeholder="e.g. 5000" required></div>
+            <div class="form-group"><label>Reference / Note</label><input type="text" id="contraNote" class="form-control" placeholder="Bank slip / ATM ref"></div>
+            <button type="submit" class="btn btn-secondary btn-block">Execute Contra Transfer</button>
+          </form>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Recent Expenses & Contra Transfers</div>
+        <div class="table-container">
+          <table>
+            <thead><tr><th>Date</th><th>Type / Category</th><th>Details</th><th>Amount</th><th>Mode / Direction</th><th>Actions</th></tr></thead>
+            <tbody id="expensesTableBody"><tr><td colspan="6" style="text-align:center;">No expense records found.</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- CAPITAL & LOANS TAB -->
+    <div id="tab-capital" class="tab-content">
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-title">Partner Capital Injections & Drawings</div>
+          <form id="capitalForm" onsubmit="event.preventDefault(); addCapitalEntry();">
+            <div class="form-row">
+              <div class="form-group">
+                <label>Partner Name</label>
+                <select id="capPartner" class="form-control"><option value="Partner A">Partner A</option><option value="Partner B">Partner B</option><option value="Partner C">Partner C</option></select>
+              </div>
+              <div class="form-group">
+                <label>Transaction Type</label>
+                <select id="capType" class="form-control"><option value="Contribution">Capital Investment (+)</option><option value="Withdrawal">Personal Drawing (-)</option></select>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group"><label>Date</label><input type="date" id="capDate" class="form-control" required></div>
+              <div class="form-group"><label>Amount (₹)</label><input type="number" id="capAmount" class="form-control" placeholder="e.g. 20000" required></div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label>Account</label>
+                <select id="capMode" class="form-control"><option value="Bank">Bank Account</option><option value="Cash">Cash in Hand</option></select>
+              </div>
+              <div class="form-group"><label>Notes</label><input type="text" id="capNote" class="form-control" placeholder="Transaction note"></div>
+            </div>
+            <button type="submit" class="btn btn-primary btn-block">Record Partner Capital Transaction</button>
+          </form>
+
+          <div style="margin-top:1.5rem;">
+            <div class="card-title" style="font-size:0.95rem;">Partner Equity Summary</div>
+            <div class="table-container">
+              <table>
+                <thead><tr><th>Partner</th><th>Net Invested</th><th>Equity Ratio</th></tr></thead>
+                <tbody id="partnerCapitalSummaryBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">External Business Loans & EMI Repayment</div>
+          <form id="loanForm" onsubmit="event.preventDefault(); addLoan();" style="border-bottom: 1px solid #eee; padding-bottom: 1rem; margin-bottom: 1rem;">
+            <div class="form-row">
+              <div class="form-group"><label>Lender / Bank Name</label><input type="text" id="loanLender" class="form-control" placeholder="e.g. HDFC / Local Financier" required></div>
+              <div class="form-group"><label>Date Received</label><input type="date" id="loanDate" class="form-control" required></div>
+            </div>
+            <div class="form-row">
+              <div class="form-group"><label>Principal Amount (₹)</label><input type="number" id="loanAmount" class="form-control" placeholder="e.g. 100000" required></div>
+              <div class="form-group"><label>Interest Rate (% p.a.)</label><input type="number" step="0.1" id="loanRate" class="form-control" placeholder="e.g. 12"></div>
+            </div>
+            <button type="submit" class="btn btn-secondary btn-block">Log New Loan Principal</button>
+          </form>
+
+          <form id="loanRepayForm" onsubmit="event.preventDefault(); addLoanRepayment();">
+            <div class="form-group"><label>Select Loan Account</label><select id="repayLoanId" class="form-control" required></select></div>
+            <div class="form-row">
+              <div class="form-group"><label>Repayment Date</label><input type="date" id="repayDate" class="form-control" required></div>
+              <div class="form-group">
+                <label>Source Account</label>
+                <select id="repayMode" class="form-control"><option value="Bank">Bank Account</option><option value="Cash">Cash in Hand</option></select>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group"><label>Principal Component (₹)</label><input type="number" id="repayPrincipal" class="form-control" placeholder="Reduces Liability" required></div>
+              <div class="form-group"><label>Interest Component (₹)</label><input type="number" id="repayInterest" class="form-control" placeholder="Hits P&L Expense" value="0"></div>
+            </div>
+            <button type="submit" class="btn btn-warning btn-block">Record EMI / Loan Repayment</button>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- REPORTS & ANALYTICS TAB -->
+    <div id="tab-reports" class="tab-content">
+      <div class="card">
+        <div class="card-title">
+          <span>Periodic Profit & Loss Statement</span>
+          <select id="reportFilterPeriod" class="form-control" style="width: auto;" onchange="renderReports()">
+            <option value="all">All-Time Cumulative</option>
+            <option value="today">Today</option>
+            <option value="week">This Week</option>
+            <option value="month">This Month</option>
+            <option value="year">This Year</option>
+          </select>
+        </div>
+
+        <div class="grid-2">
+          <div>
+            <h4 style="color:var(--success); border-bottom:2px solid var(--success); padding-bottom:4px; margin-bottom:10px;">REVENUE & INFLOWS</h4>
+            <table style="font-size:0.95rem;">
+              <tr><td>Retail & Counter Meat Sales:</td><td style="text-align:right; font-weight:700;" id="repRevSales">₹0</td></tr>
+              <tr><td>Delivery Charges Revenue:</td><td style="text-align:right; font-weight:700;" id="repRevDelivery">₹0</td></tr>
+              <tr><td>Salvage Meat Recovery:</td><td style="text-align:right; font-weight:700;" id="repRevSalvage">₹0</td></tr>
+              <tr style="border-top:2px solid #ddd; font-weight:700; color:var(--success);"><td>TOTAL GROSS REVENUE:</td><td style="text-align:right;" id="repTotalRev">₹0</td></tr>
+            </table>
+          </div>
+          <div>
+            <h4 style="color:var(--danger); border-bottom:2px solid var(--danger); padding-bottom:4px; margin-bottom:10px;">OPERATING EXPENSES & COGS</h4>
+            <table style="font-size:0.95rem;">
+              <tr><td>Livestock Net Purchase Cost (COGS):</td><td style="text-align:right; font-weight:700;" id="repCostCOGS">₹0</td></tr>
+              <tr><td>Labour Wages & Advances:</td><td style="text-align:right; font-weight:700;" id="repCostWages">₹0</td></tr>
+              <tr><td>Shop Operating Expenses:</td><td style="text-align:right; font-weight:700;" id="repCostExpenses">₹0</td></tr>
+              <tr><td>Mortality Losses (Deducted):</td><td style="text-align:right; font-weight:700;" id="repCostMortality">₹0</td></tr>
+              <tr><td>Loan Interest Expense:</td><td style="text-align:right; font-weight:700;" id="repCostInterest">₹0</td></tr>
+              <tr style="border-top:2px solid #ddd; font-weight:700; color:var(--danger);"><td>TOTAL EXPENSES:</td><td style="text-align:right;" id="repTotalExp">₹0</td></tr>
+            </table>
+          </div>
+        </div>
+
+        <div style="margin-top:1.5rem; background:#f8f9fa; padding:1rem; border-radius:6px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+          <span style="font-size:1.2rem; font-weight:700; color:var(--secondary);">NET OPERATING PROFIT / LOSS:</span>
+          <span style="font-size:1.6rem; font-weight:800;" id="repNetProfitResult">₹0</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- SETTINGS & BACKUP TAB -->
+    <div id="tab-settings" class="tab-content">
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-title">Local Data Backup & Restore</div>
+          <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:1rem;">Export complete ERP database to JSON file or restore existing backup.</p>
+          <button class="btn btn-primary" onclick="exportBackupJSON()">Download JSON Data Backup</button>
+          <hr style="margin:1rem 0;">
+          <div class="form-group"><label>Restore Database from File</label><input type="file" id="importFileInput" accept=".json" class="form-control"></div>
+          <button class="btn btn-warning" onclick="importBackupJSON()">Restore JSON Database</button>
+        </div>
+
+        <div class="card">
+          <div class="card-title">Google Drive Cloud Sync</div>
+          <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:1rem;">Configure Google Cloud Drive Client ID for free online cloud backups. Requires the app to be opened over HTTP/HTTPS (localhost or hosted).</p>
+          <div class="form-group"><label>Google OAuth Client ID</label><input type="text" id="driveClientId" class="form-control" placeholder="e.g. 123456789-abc.apps.googleusercontent.com"></div>
+          <button class="btn btn-secondary" onclick="saveDriveConfig()">Save Client ID Configuration</button>
+          <button class="btn btn-success" onclick="syncToGoogleDrive()" style="margin-top:10px;">Sync Now to Google Drive</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- MODALS -->
+
+  <!-- Post-Sale Invoice Dispatch Modal (FIX FOR WHATSAPP/SMS POPUP BLOCKERS) -->
+  <div id="postSaleModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div class="modal-title">🎉 Sale Completed Successfully</div>
+        <button class="close-btn" onclick="closePostSaleModal()">&times;</button>
+      </div>
+      <div id="postSaleSummary" style="background:#f8f9fa; padding:12px; border-radius:6px; margin-bottom:15px; font-size:0.9rem; line-height:1.5;"></div>
+      <div style="display:flex; flex-direction:column; gap:10px;">
+        <button class="btn btn-success btn-block" style="font-size:1rem; padding:12px;" onclick="triggerWhatsAppModalSale()">📲 Send WhatsApp Invoice Now</button>
+        <button class="btn btn-warning btn-block" style="font-size:1rem; padding:12px;" onclick="triggerSmsModalSale()">📱 Send SMS Invoice Now</button>
+        <div style="display:flex; gap:10px;">
+          <button class="btn btn-info" style="flex:1;" onclick="copyInvoiceText(activeModalSaleId)">📋 Copy Text</button>
+          <button class="btn btn-secondary" style="flex:1;" onclick="window.print()">🖨️ Print Bill</button>
+        </div>
+        <button class="btn btn-primary btn-block" style="margin-top:5px;" onclick="closePostSaleModal()">Done / Next Sale</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Customer Purchase History Modal (NEW) -->
+  <div id="custHistoryModal" class="modal">
+    <div class="modal-content" style="max-width:850px;">
+      <div class="modal-header">
+        <div class="modal-title" id="custHistoryTitle">📜 Customer Purchase History</div>
+        <button class="close-btn" onclick="closeCustHistoryModal()">&times;</button>
+      </div>
+      
+      <div id="custHistoryHeader" class="grid-4 mb-4" style="gap:10px; margin-bottom:15px;"></div>
+
+      <div style="display:flex; gap:8px; margin-bottom:12px; flex-wrap:wrap;">
+        <button class="btn btn-sm btn-success" id="btnHistWA" onclick="sendCustHistoryWA()">💬 Send Statement via WhatsApp</button>
+        <button class="btn btn-sm btn-warning" id="btnHistSMS" onclick="sendCustHistorySMS()">📱 Send Statement via SMS</button>
+      </div>
+
+      <div class="table-container" style="max-height:380px; overflow-y:auto;">
+        <table>
+          <thead>
+            <tr><th>Date & Time</th><th>Type</th><th>Item Details</th><th>Qty & Rate</th><th>Delivery</th><th>Total</th><th>Payment</th><th>Note</th></tr>
+          </thead>
+          <tbody id="custHistoryTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Khata Collection Modal -->
+  <div id="receiptModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div class="modal-title">Record Credit Payment / Khata Collection</div>
+        <button class="close-btn" onclick="closeReceiptModal()">&times;</button>
+      </div>
+      <form onsubmit="event.preventDefault(); saveReceipt();">
+        <div class="form-group"><label>Select Customer / Hotel</label><select id="recCustomer" class="form-control" required></select></div>
+        <div class="form-group"><label>Collection Date</label><input type="date" id="recDate" class="form-control" required></div>
+        <div class="form-group"><label>Amount Received (₹)</label><input type="number" id="recAmount" class="form-control" placeholder="e.g. 5000" required></div>
+        <div class="form-group">
+          <label>Deposit Account</label>
+          <select id="recMode" class="form-control"><option value="Cash">Cash in Hand</option><option value="Bank">Bank / UPI Transfer</option></select>
+        </div>
+        <div class="form-group"><label>Payment Note / Receipt Ref</label><input type="text" id="recNote" class="form-control" placeholder="e.g. UPI Ref no"></div>
+        <button type="submit" class="btn btn-primary btn-block">Record Collection</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Edit Customer Modal -->
+  <div id="editModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div class="modal-title" id="editModalTitle">Edit Record</div>
+        <button class="close-btn" onclick="closeEditModal()">&times;</button>
+      </div>
+      <div id="editModalBody"></div>
+    </div>
+  </div>
+
+  <!-- Broadcast Queue Modal -->
+  <div id="msgQueueModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div class="modal-title" id="msgQueueTitle">Broadcast Queue</div>
+        <button class="close-btn" onclick="closeMsgQueue()">&times;</button>
+      </div>
+      <div id="msgQueueProgress" style="margin-bottom:10px; font-size:0.85rem;"></div>
+      <div id="msgQueueBody"></div>
+      <div id="msgQueueActions" style="display:flex; gap:8px; margin-top:12px; flex-wrap:wrap;"></div>
+    </div>
+  </div>
+
+  <script>
+    // ================== CORE STATE ==================
+    const STORAGE_KEY = 'mutton_shop_erp_v6_complete';
+
+    let state = {
+      capital: [],
+      capitalWithdrawals: [],
+      loans: [],
+      loanRepayments: [],
+      dressing: [],
+      sales: [],
+      customers: [],
+      labourers: [],
+      wages: [],
+      expenses: [],
+      contraTransfers: [],
+      receipts: [],
+      livestockDeaths: [],
+      actualFreezerKg: 0,
+      freezerAudits: [],
+      msgLogs: [],
+      meta: { driveClientId: '', driveFileId: null, lastBackup: null }
+    };
+
+    let activeOrderType = 'counter';
+    let customerRowsCache = [];
+    let custSelection = new Set();
+    let msgQueue = null;
+    let editingCustomerKey = null;
+    let activeModalSaleId = null;
+    let activeHistoryCustName = null;
+
+    // ================== HELPERS ==================
+    function esc(s) {
+      return String(s == null ? '' : s).replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]));
+    }
+    function cleanPhone(p) {
+      let c = (p || '').toString().replace(/\D/g, '');
+      if (c.length === 12 && c.startsWith('91')) c = c.slice(2);
+      if (c.length === 11 && c.startsWith('0')) c = c.slice(1);
+      return c;
+    }
+    function formatWaPhone(phone) {
+      let c = cleanPhone(phone);
+      if (c.length === 10) c = '91' + c;
+      return c;
+    }
+    function formatSmsPhone(phone) {
+      let c = cleanPhone(phone);
+      if (c.length === 10) c = '91' + c;
+      return '+' + c;
+    }
+
+    // Cross-platform iOS vs Android SMS URI Builder
+    function openSmsLink(phone, message) {
+      const cleaned = cleanPhone(phone);
+      if (!cleaned) return alert('No valid phone number found.');
+      const formatted = formatSmsPhone(cleaned);
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+      const separator = isIOS ? '&' : '?';
+      const url = `sms:${formatted}${separator}body=${encodeURIComponent(message)}`;
+      window.location.href = url;
+    }
+
+    // ================== LOAD & SAVE ==================
+    function loadState() {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) {
+        try {
+          const parsed = JSON.parse(raw);
+          state = { ...state, ...parsed };
+          state.meta = { driveClientId: '', driveFileId: null, lastBackup: null, ...(parsed.meta || {}) };
+          state.msgLogs = state.msgLogs || [];
+        } catch (e) { console.error('Error loading stored ERP data:', e); }
+      }
+      initDefaults();
+    }
+    function saveState() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      renderAll();
+    }
+    function initDefaults() {
+      const today = new Date().toISOString().split('T')[0];
+      ['drDate', 'mortDate', 'wageDate', 'expDate', 'contraDate', 'capDate', 'loanDate', 'repayDate', 'recDate'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el && !el.value) el.value = today;
+      });
+      if (state.meta.driveClientId) {
+        const d = document.getElementById('driveClientId');
+        if (d) d.value = state.meta.driveClientId;
+      }
+      const bulkEl = document.getElementById('bulkMsgText');
+      if (bulkEl && !bulkEl.value) bulkEl.value = getDefaultTemplate('wa');
+      updateBulkCounter();
+    }
+
+    // ================== NAVIGATION ==================
+    function switchTab(tabId) {
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
+      const activeTab = document.getElementById(`tab-${tabId}`);
+      if (activeTab) activeTab.classList.add('active');
+      const btn = Array.from(document.querySelectorAll('.nav-btn')).find(b => b.getAttribute('onclick').includes(tabId));
+      if (btn) btn.classList.add('active');
+      renderAll();
+    }
+
+    // ================== POS ORDER TYPE & BILLING ==================
+    function setOrderType(type) {
+      activeOrderType = type;
+      document.getElementById('btnTypeCounter').classList.remove('active');
+      document.getElementById('btnTypeParcel').classList.remove('active');
+      document.getElementById('btnTypeOnline').classList.remove('active');
+      const deliveryRow = document.getElementById('deliveryChargeRow');
+      if (type === 'counter') {
+        document.getElementById('btnTypeCounter').classList.add('active');
+        deliveryRow.style.display = 'none';
+        document.getElementById('posDeliveryFee').value = 0;
+      } else if (type === 'parcel') {
+        document.getElementById('btnTypeParcel').classList.add('active');
+        deliveryRow.style.display = 'flex';
+      } else {
+        document.getElementById('btnTypeOnline').classList.add('active');
+        deliveryRow.style.display = 'flex';
+      }
+      calcSaleTotal();
+    }
+    function applyTierRate() {
+      const tier = document.getElementById('posTier').value;
+      const rateInput = document.getElementById('posRate');
+      if (tier === 'Wholesale') rateInput.value = 680;
+      else if (tier === 'Regular') rateInput.value = 720;
+      else rateInput.value = 750;
+      calcSaleTotal();
+    }
+    function calcSaleTotal() {
+      const qty = parseFloat(document.getElementById('posQty').value) || 0;
+      const rate = parseFloat(document.getElementById('posRate').value) || 0;
+      const deliveryFee = (activeOrderType !== 'counter') ? (parseFloat(document.getElementById('posDeliveryFee').value) || 0) : 0;
+      document.getElementById('posTotal').value = Math.round((qty * rate) + deliveryFee);
+    }
+
+    function processPosSale() {
+      const custName = document.getElementById('posCust').value.trim() || 'Walk-in Customer';
+      const phone = cleanPhone(document.getElementById('posPhone').value);
+      const tier = document.getElementById('posTier').value;
+      const item = document.getElementById('posItem').value;
+      const qty = parseFloat(document.getElementById('posQty').value) || 0;
+      const rate = parseFloat(document.getElementById('posRate').value) || 0;
+      const deliveryFee = (activeOrderType !== 'counter') ? (parseFloat(document.getElementById('posDeliveryFee').value) || 0) : 0;
+      const total = Math.round((qty * rate) + deliveryFee);
+      const mode = document.getElementById('posMode').value;
+      const note = document.getElementById('posNote').value.trim();
+
+      if (qty <= 0 || rate <= 0) { alert('Please enter valid quantity and rate.'); return; }
+
+      // Upsert Customer
+      let custObj = state.customers.find(c => c.name.trim().toLowerCase() === custName.toLowerCase());
+      if (!custObj && custName !== 'Walk-in Customer') {
+        custObj = { id: 'CUST_' + Date.now(), name: custName, phone: phone, whatsapp: phone, tier: tier, address: '', notes: '', createdAt: new Date().toISOString() };
+        state.customers.push(custObj);
+      } else if (custObj) {
+        if (phone) { custObj.phone = phone; if (!custObj.whatsapp) custObj.whatsapp = phone; }
+        custObj.tier = tier;
+      }
+
+      const sale = {
+        id: 'SALE_' + Date.now(),
+        date: new Date().toISOString().split('T')[0],
+        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        cust: custName, phone: phone, tier: tier, item: item, qty: qty, rate: rate,
+        orderType: activeOrderType, deliveryFee: deliveryFee, total: total, mode: mode, note: note
+      };
+
+      state.sales.unshift(sale);
+      saveState();
+
+      // Reset form
+      document.getElementById('posQty').value = '';
+      document.getElementById('posNote').value = '';
+      document.getElementById('posDeliveryFee').value = 0;
+      document.getElementById('posDeliveryNote').value = '';
+
+      // Open Post-Sale Dispatch Modal
+      openPostSaleModal(sale.id);
+    }
+
+    // ================== POST-SALE DISPATCH MODAL (FIXES POPUP BLOCKERS) ==================
+    function openPostSaleModal(saleId) {
+      activeModalSaleId = saleId;
+      const sale = state.sales.find(s => s.id === saleId);
+      if (!sale) return;
+
+      const summaryEl = document.getElementById('postSaleSummary');
+      summaryEl.innerHTML = `
+        <strong>Customer:</strong> ${esc(sale.cust)} ${sale.phone ? '(' + esc(sale.phone) + ')' : ''}<br>
+        <strong>Item:</strong> ${esc(sale.item)} (${sale.qty} kg @ ₹${sale.rate})<br>
+        ${sale.deliveryFee > 0 ? '<strong>Delivery Fee:</strong> ₹' + sale.deliveryFee + '<br>' : ''}
+        <strong>Total Bill:</strong> <span style="color:var(--primary); font-size:1.1rem; font-weight:700;">₹${sale.total}</span> (${sale.mode})
+      `;
+      document.getElementById('postSaleModal').classList.add('active');
+    }
+
+    function closePostSaleModal() {
+      document.getElementById('postSaleModal').classList.remove('active');
+      activeModalSaleId = null;
+    }
+
+    function triggerWhatsAppModalSale() {
+      if (activeModalSaleId) sendWhatsAppInvoice(activeModalSaleId);
+    }
+    function triggerSmsModalSale() {
+      if (activeModalSaleId) sendSmsInvoice(activeModalSaleId);
+    }
+
+    function buildInvoiceText(sale) {
+      const orderTypeBadge = sale.orderType === 'parcel' ? '📦 Parcel Delivery' : (sale.orderType === 'online' ? '🌐 Online Delivery' : '🏪 Counter Sale');
+      let msg = `🧾 *MUTTON BABU ERP - INVOICE*\n`;
+      msg += `------------------------------------\n`;
+      msg += `Date: ${sale.date} ${sale.time || ''}\n`;
+      msg += `Customer: ${sale.cust}\n`;
+      msg += `Order Type: ${orderTypeBadge}\n`;
+      msg += `Item: ${sale.item}\n`;
+      msg += `Qty: ${sale.qty} kg @ ₹${sale.rate}/kg = ₹${Math.round(sale.qty * sale.rate)}\n`;
+      if (sale.deliveryFee > 0) msg += `Delivery Charges: ₹${sale.deliveryFee}\n`;
+      msg += `------------------------------------\n`;
+      msg += `*GRAND TOTAL: ₹${sale.total}*\n`;
+      msg += `Payment Status: ${sale.mode === 'Credit' ? 'UNPAID (Khata Credit)' : 'PAID (' + sale.mode + ')'}\n`;
+      if (sale.note) msg += `Note: ${sale.note}\n`;
+      msg += `------------------------------------\n`;
+      msg += `Thank you for your business! 🙏🏻`;
+      return msg;
+    }
+
+    function sendWhatsAppInvoice(saleId) {
+      const sale = state.sales.find(s => s.id === saleId);
+      if (!sale) return;
+      const formattedPhone = formatWaPhone(sale.phone);
+      const msg = buildInvoiceText(sale);
+      const encodedMsg = encodeURIComponent(msg);
+      const waUrl = formattedPhone ? `https://wa.me/${formattedPhone}?text=${encodedMsg}` : `https://wa.me/?text=${encodedMsg}`;
+      window.open(waUrl, '_blank');
+    }
+
+    function sendSmsInvoice(saleId) {
+      const sale = state.sales.find(s => s.id === saleId);
+      if (!sale) return;
+      if (!cleanPhone(sale.phone)) return alert('No phone number saved for this sale.');
+      let msg = `Mutton Babu Invoice ${sale.date}: ${sale.item} ${sale.qty}kg x Rs.${sale.rate} = Rs.${Math.round(sale.qty * sale.rate)}`;
+      if (sale.deliveryFee > 0) msg += ` + Delivery Rs.${sale.deliveryFee}`;
+      msg += `. Total Rs.${sale.total}. ${sale.mode === 'Credit' ? 'UNPAID (Khata)' : 'Paid-' + sale.mode}. Thank you!`;
+      openSmsLink(sale.phone, msg);
+    }
+
+    function copyInvoiceText(saleId) {
+      const sale = state.sales.find(s => s.id === saleId);
+      if (!sale) return;
+      const msg = buildInvoiceText(sale);
+      navigator.clipboard.writeText(msg).then(() => alert('Invoice copied to clipboard!')).catch(() => prompt('Copy manually:', msg));
+    }
+
+    // ================== CUSTOMER PURCHASE HISTORY ENGINE (NEW) ==================
+    function openCustomerHistory(custName) {
+      if (!custName) return;
+      activeHistoryCustName = custName;
+      const key = custName.trim().toLowerCase();
+      
+      const sales = state.sales.filter(s => s.cust && s.cust.trim().toLowerCase() === key);
+      const receipts = state.receipts.filter(r => r.cust && r.cust.trim().toLowerCase() === key);
+      const custObj = state.customers.find(c => c.name.trim().toLowerCase() === key);
+
+      const totalSpent = sales.reduce((sum, s) => sum + s.total, 0);
+      const totalOrders = sales.length;
+      const avgOrder = totalOrders > 0 ? (totalSpent / totalOrders) : 0;
+      const totalKg = sales.reduce((sum, s) => sum + (s.qty || 0), 0);
+
+      const creditBilled = sales.filter(s => s.mode === 'Credit').reduce((sum, s) => sum + s.total, 0);
+      const creditPaid = receipts.reduce((sum, r) => sum + r.amt, 0);
+      const due = Math.max(0, creditBilled - creditPaid);
+
+      document.getElementById('custHistoryTitle').innerHTML = `📜 Purchase History: <strong>${esc(custName)}</strong>`;
+
+      const headerEl = document.getElementById('custHistoryHeader');
+      headerEl.innerHTML = `
+        <div class="kpi-card" style="border-left-color: var(--primary);">
+          <div class="kpi-title">Total Lifetime Spent</div>
+          <div class="kpi-value">₹${Math.round(totalSpent).toLocaleString()}</div>
+        </div>
+        <div class="kpi-card" style="border-left-color: var(--info);">
+          <div class="kpi-title">Total Orders & Meat</div>
+          <div class="kpi-value">${totalOrders} orders</div>
+          <div class="kpi-sub">${totalKg.toFixed(1)} kg total meat bought</div>
+        </div>
+        <div class="kpi-card" style="border-left-color: var(--success);">
+          <div class="kpi-title">Avg. Order Value</div>
+          <div class="kpi-value">₹${Math.round(avgOrder).toLocaleString()}</div>
+        </div>
+        <div class="kpi-card" style="border-left-color: ${due > 0 ? 'var(--danger)' : 'var(--success)'};">
+          <div class="kpi-title">Outstanding Khata Due</div>
+          <div class="kpi-value">₹${due.toLocaleString()}</div>
+        </div>
+      `;
+
+      const tbody = document.getElementById('custHistoryTableBody');
+      if (sales.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;">No purchases recorded for ${esc(custName)}.</td></tr>`;
+      } else {
+        tbody.innerHTML = sales.map(s => {
+          const typeBadge = s.orderType === 'parcel' ? '📦 Parcel' : (s.orderType === 'online' ? '🌐 Online' : '🏪 Counter');
+          return `<tr>
+            <td>${s.date}<br><small class="text-muted">${s.time || ''}</small></td>
+            <td><span class="badge badge-secondary">${typeBadge}</span></td>
+            <td><strong>${esc(s.item)}</strong></td>
+            <td>${s.qty} kg @ ₹${s.rate}/kg</td>
+            <td>${s.deliveryFee > 0 ? '₹' + s.deliveryFee : '-'}</td>
+            <td><strong>₹${s.total}</strong></td>
+            <td><span class="badge ${s.mode === 'Credit' ? 'badge-danger' : 'badge-success'}">${s.mode}</span></td>
+            <td><small>${esc(s.note || '-')}</small></td>
+          </tr>`;
+        }).join('');
+      }
+
+      document.getElementById('custHistoryModal').classList.add('active');
+    }
+
+    function closeCustHistoryModal() {
+      document.getElementById('custHistoryModal').classList.remove('active');
+      activeHistoryCustName = null;
+    }
+
+    function buildCustStatementText(custName) {
+      const key = custName.trim().toLowerCase();
+      const sales = state.sales.filter(s => s.cust && s.cust.trim().toLowerCase() === key);
+      const totalSpent = sales.reduce((sum, s) => sum + s.total, 0);
+      const totalKg = sales.reduce((sum, s) => sum + (s.qty || 0), 0);
+
+      let text = `📜 *MUTTON BABU - PURCHASE STATEMENT*\n`;
+      text += `Customer: ${custName}\n`;
+      text += `Total Orders: ${sales.length} | Total Meat: ${totalKg.toFixed(1)} kg\n`;
+      text += `Total Spent: ₹${Math.round(totalSpent)}\n`;
+      text += `------------------------------------\n`;
+      sales.slice(0, 10).forEach((s, idx) => {
+        text += `${idx + 1}. ${s.date}: ${s.item} (${s.qty}kg @ ₹${s.rate}) = ₹${s.total}\n`;
+      });
+      if (sales.length > 10) text += `... and ${sales.length - 10} more past orders.\n`;
+      text += `------------------------------------\n`;
+      text += `Thank you for being a valued customer! 🙏🏻`;
+      return text;
+    }
+
+    function sendCustHistoryWA() {
+      if (!activeHistoryCustName) return;
+      const key = activeHistoryCustName.trim().toLowerCase();
+      const custObj = state.customers.find(c => c.name.trim().toLowerCase() === key);
+      const phone = custObj ? (custObj.whatsapp || custObj.phone) : '';
+      const text = buildCustStatementText(activeHistoryCustName);
+      const formattedPhone = formatWaPhone(phone);
+      const waUrl = formattedPhone ? `https://wa.me/${formattedPhone}?text=${encodeURIComponent(text)}` : `https://wa.me/?text=${encodeURIComponent(text)}`;
+      window.open(waUrl, '_blank');
+    }
+
+    function sendCustHistorySMS() {
+      if (!activeHistoryCustName) return;
+      const key = activeHistoryCustName.trim().toLowerCase();
+      const custObj = state.customers.find(c => c.name.trim().toLowerCase() === key);
+      const phone = custObj ? (custObj.phone || custObj.whatsapp) : '';
+      if (!cleanPhone(phone)) return alert('No phone number saved for this customer.');
+      const sales = state.sales.filter(s => s.cust && s.cust.trim().toLowerCase() === key);
+      const totalSpent = sales.reduce((sum, s) => sum + s.total, 0);
+      const msg = `Mutton Babu Statement for ${activeHistoryCustName}: Total ${sales.length} orders, Total Spent Rs.${Math.round(totalSpent)}. Thank you for your business!`;
+      openSmsLink(phone, msg);
+    }
+
+    // ================== FINANCIAL ENGINE ==================
+    function computeDerivedBalances() {
+      const salesCash = state.sales.filter(s => s.mode === 'Cash').reduce((sum, s) => sum + s.total, 0);
+      const khataCash = state.receipts.filter(r => r.mode === 'Cash').reduce((sum, r) => sum + r.amt, 0);
+      const capCashIn = state.capital.filter(c => c.mode === 'Cash').reduce((sum, c) => sum + c.amount, 0);
+      const salvageCash = state.livestockDeaths.filter(d => d.recoveryMode === 'Cash').reduce((sum, d) => sum + d.recoveryAmt, 0);
+      const contraInToCash = state.contraTransfers.filter(ct => ct.direction === 'BankToCash').reduce((sum, ct) => sum + ct.amount, 0);
+      const capWithdrawCash = state.capitalWithdrawals.filter(c => c.mode === 'Cash').reduce((sum, c) => sum + c.amount, 0);
+      const dressingCash = state.dressing.filter(d => d.payMode === 'Cash').reduce((sum, d) => sum + (d.purchaseRs + d.expRs - d.byProdRs), 0);
+      const wagesCash = state.wages.filter(w => w.mode === 'Cash').reduce((sum, w) => sum + w.amount, 0);
+      const expCash = state.expenses.filter(e => e.mode === 'Cash').reduce((sum, e) => sum + e.amount, 0);
+      const contraOutFromCash = state.contraTransfers.filter(ct => ct.direction === 'CashToBank').reduce((sum, ct) => sum + ct.amount, 0);
+      const loanRepayCash = state.loanRepayments.filter(lr => lr.mode === 'Cash').reduce((sum, lr) => sum + (lr.principal + lr.interest), 0);
+      const cashInHand = (salesCash + khataCash + capCashIn + salvageCash + contraInToCash) - (capWithdrawCash + dressingCash + wagesCash + expCash + contraOutFromCash + loanRepayCash);
+
+      const salesBank = state.sales.filter(s => s.mode === 'Bank').reduce((sum, s) => sum + s.total, 0);
+      const khataBank = state.receipts.filter(r => r.mode === 'Bank').reduce((sum, r) => sum + r.amt, 0);
+      const capBankIn = state.capital.filter(c => c.mode === 'Bank').reduce((sum, c) => sum + c.amount, 0);
+      const loanPrincipalIn = state.loans.reduce((sum, l) => sum + l.amount, 0);
+      const salvageBank = state.livestockDeaths.filter(d => d.recoveryMode === 'Bank').reduce((sum, d) => sum + d.recoveryAmt, 0);
+      const contraInToBank = state.contraTransfers.filter(ct => ct.direction === 'CashToBank').reduce((sum, ct) => sum + ct.amount, 0);
+      const capWithdrawBank = state.capitalWithdrawals.filter(c => c.mode === 'Bank').reduce((sum, c) => sum + c.amount, 0);
+      const dressingBank = state.dressing.filter(d => d.payMode === 'Bank').reduce((sum, d) => sum + (d.purchaseRs + d.expRs - d.byProdRs), 0);
+      const wagesBank = state.wages.filter(w => w.mode === 'Bank').reduce((sum, w) => sum + w.amount, 0);
+      const expBank = state.expenses.filter(e => e.mode === 'Bank').reduce((sum, e) => sum + e.amount, 0);
+      const contraOutFromBank = state.contraTransfers.filter(ct => ct.direction === 'BankToCash').reduce((sum, ct) => sum + ct.amount, 0);
+      const loanRepayBank = state.loanRepayments.filter(lr => lr.mode === 'Bank').reduce((sum, lr) => sum + (lr.principal + lr.interest), 0);
+      const cashInBank = (salesBank + khataBank + capBankIn + loanPrincipalIn + salvageBank + contraInToBank) - (capWithdrawBank + dressingBank + wagesBank + expBank + contraOutFromBank + loanRepayBank);
+
+      const totalDressedYield = state.dressing.reduce((sum, d) => sum + d.dressedKg, 0);
+      const totalMeatSold = state.sales.reduce((sum, s) => sum + s.qty, 0);
+      const estMeatStock = Math.max(0, totalDressedYield - totalMeatSold);
+
+      const mortalityLossTotal = state.livestockDeaths.reduce((sum, d) => d.deduct !== false ? sum + Math.max(0, d.lossValue - d.recoveryAmt) : sum, 0);
+
+      const totalSalesRev = state.sales.reduce((sum, s) => sum + s.total, 0);
+      const totalSalvageRev = state.livestockDeaths.reduce((sum, d) => sum + d.recoveryAmt, 0);
+      const totalGrossRev = totalSalesRev + totalSalvageRev;
+      const totalCOGS = state.dressing.reduce((sum, d) => sum + (d.purchaseRs + d.expRs - d.byProdRs), 0);
+      const totalWages = state.wages.reduce((sum, w) => sum + w.amount, 0);
+      const totalExpenses = state.expenses.reduce((sum, e) => sum + e.amount, 0);
+      const totalInterest = state.loanRepayments.reduce((sum, lr) => sum + lr.interest, 0);
+      const totalCosts = totalCOGS + totalWages + totalExpenses + mortalityLossTotal + totalInterest;
+      const netProfit = totalGrossRev - totalCosts;
+
+      const totalLoans = state.loans.reduce((sum, l) => sum + l.amount, 0);
+      const totalRepaidPrincipal = state.loanRepayments.reduce((sum, lr) => sum + lr.principal, 0);
+      const loanOutstanding = Math.max(0, totalLoans - totalRepaidPrincipal);
+
+      return { cashInHand, cashInBank, estMeatStock, mortalityLossTotal, netProfit, loanOutstanding };
+    }
+
+    // ================== RENDER ALL ==================
+    function renderAll() {
+      const derived = computeDerivedBalances();
+
+      document.getElementById('kpiCashHand').innerText = `₹${derived.cashInHand.toLocaleString()}`;
+      document.getElementById('kpiCashBank').innerText = `₹${derived.cashInBank.toLocaleString()}`;
+      document.getElementById('kpiMeatStock').innerText = `${derived.estMeatStock.toFixed(1)} kg`;
+      document.getElementById('kpiNetProfit').innerText = `₹${derived.netProfit.toLocaleString()}`;
+      document.getElementById('kpiMortalityLoss').innerText = `₹${derived.mortalityLossTotal.toLocaleString()}`;
+      document.getElementById('kpiLoansOutstanding').innerText = `₹${derived.loanOutstanding.toLocaleString()}`;
+
+      const totalNetCap = state.capital.reduce((sum, c) => sum + c.amount, 0) - state.capitalWithdrawals.reduce((sum, c) => sum + c.amount, 0);
+      const capExProgress = totalNetCap > 0 ? Math.min(100, Math.max(0, (derived.netProfit / totalNetCap) * 100)) : 0;
+      document.getElementById('kpiCapExProgress').innerText = `${capExProgress.toFixed(1)}%`;
+      document.getElementById('capExProgressBar').style.width = `${capExProgress}%`;
+
+      const advisorEl = document.getElementById('strategyAdvisor');
+      if (derived.estMeatStock > 25) {
+        advisorEl.innerHTML = `⚠️ <strong>High Inventory Alert:</strong> Meat stock is high (${derived.estMeatStock.toFixed(1)} kg). Consider offering special hotel tier rates or a promo broadcast.`;
+      } else if (derived.estMeatStock < 5) {
+        advisorEl.innerHTML = `🐐 <strong>Stock Alert:</strong> Low meat inventory (${derived.estMeatStock.toFixed(1)} kg). Plan next goat batch purchase.`;
+      } else {
+        advisorEl.innerHTML = `💡 <strong>Daily Strategy Advisor:</strong> Operations smooth. Cash: ₹${derived.cashInHand.toLocaleString()} | Bank: ₹${derived.cashInBank.toLocaleString()}.`;
+      }
+
+      renderSales();
+      renderDressing();
+      renderMortality();
+      renderKhata();
+      renderCustomers();
+      renderCampaignLog();
+      renderLabour();
+      renderExpenses();
+      renderCapital();
+      renderReports();
+      renderFreezerAuditTable();
+      drawProfitTrendChart();
+    }
+
+    // ================== SALES REGISTER ==================
+    function renderSales() {
+      const tbody = document.getElementById('salesTableBody');
+      if (state.sales.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;">No sales recorded today.</td></tr>`;
+        return;
+      }
+      tbody.innerHTML = state.sales.map(s => {
+        const orderTypeBadge = s.orderType === 'parcel' ? `<span class="badge badge-warning">📦 Parcel</span>` : (s.orderType === 'online' ? `<span class="badge badge-info">🌐 Online</span>` : `<span class="badge badge-secondary">🏪 Counter</span>`);
+        return `
+          <tr>
+            <td>${s.time || ''}<br><small class="text-muted">${s.date}</small></td>
+            <td><span class="link-cust" onclick="openCustomerHistory('${esc(s.cust)}')">${esc(s.cust)}</span><br>${orderTypeBadge} ${s.phone ? `<small>(${esc(s.phone)})</small>` : ''}</td>
+            <td>${esc(s.item)}<br><small>${s.qty} kg @ ₹${s.rate}</small></td>
+            <td>${s.deliveryFee > 0 ? '₹' + s.deliveryFee : '-'}</td>
+            <td><strong>₹${s.total}</strong></td>
+            <td><span class="badge ${s.mode === 'Credit' ? 'badge-danger' : 'badge-success'}">${s.mode}</span></td>
+            <td style="white-space:nowrap;">
+              <button class="btn btn-sm btn-success" onclick="sendWhatsAppInvoice('${s.id}')" title="Send WhatsApp Invoice">💬</button>
+              <button class="btn btn-sm btn-warning" onclick="sendSmsInvoice('${s.id}')" title="Send SMS Invoice">📱</button>
+              <button class="btn btn-sm btn-info" onclick="copyInvoiceText('${s.id}')" title="Copy Text">📋</button>
+              <button class="btn btn-sm btn-danger" onclick="deleteSale('${s.id}')">🗑️</button>
+            </td>
+          </tr>`;
+      }).join('');
+
+      const dl = document.getElementById('customerList');
+      dl.innerHTML = state.customers.map(c => `<option value="${esc(c.name)}">${c.phone ? esc(c.phone) + ' - ' : ''}${esc(c.tier)}</option>`).join('');
+    }
+    function deleteSale(id) {
+      if (confirm('Delete this sale record? Ledger balances will automatically recalculate.')) {
+        state.sales = state.sales.filter(s => s.id !== id);
+        saveState();
+      }
+    }
+
+    // ================== DRESSING & LIVESTOCK ==================
+    function renderGoatGrid() {
+      const count = parseInt(document.getElementById('drCount').value) || 0;
+      const container = document.getElementById('goatWeightGridContainer');
+      if (count <= 0) {
+        container.innerHTML = `<small class="text-muted">Enter live & dressed weight per goat after specifying goat count.</small>`;
+        return;
+      }
+      let html = `<table style="width:100%; font-size:0.8rem;"><thead><tr><th>Goat #</th><th>Live Weight (Kg)</th><th>Dressed Meat (Kg)</th></tr></thead><tbody>`;
+      for (let i = 1; i <= count; i++) {
+        html += `<tr><td>Goat ${i}</td>
+          <td><input type="number" step="0.1" class="form-control g-live" placeholder="e.g. 30" oninput="calcGoatTotals()"></td>
+          <td><input type="number" step="0.1" class="form-control g-dressed" placeholder="e.g. 18" oninput="calcGoatTotals()"></td></tr>`;
+      }
+      html += `</tbody></table>`;
+      container.innerHTML = html;
+    }
+    function calcGoatTotals() {
+      let liveTotal = 0, dressedTotal = 0;
+      document.querySelectorAll('.g-live').forEach(el => liveTotal += parseFloat(el.value) || 0);
+      document.querySelectorAll('.g-dressed').forEach(el => dressedTotal += parseFloat(el.value) || 0);
+      if (liveTotal > 0) document.getElementById('drLiveKg').value = liveTotal.toFixed(1);
+      if (dressedTotal > 0) document.getElementById('drDressedKg').value = dressedTotal.toFixed(1);
+    }
+    function addDressingBatch() {
+      const date = document.getElementById('drDate').value;
+      const count = parseInt(document.getElementById('drCount').value) || 0;
+      const liveKg = parseFloat(document.getElementById('drLiveKg').value) || 0;
+      const dressedKg = parseFloat(document.getElementById('drDressedKg').value) || 0;
+      const purchaseRs = parseFloat(document.getElementById('drPurchaseRs').value) || 0;
+      const expRs = parseFloat(document.getElementById('drExpRs').value) || 0;
+      const byProdRs = parseFloat(document.getElementById('drByProdRs').value) || 0;
+      const payMode = document.getElementById('drPayMode').value;
+      if (count <= 0 || dressedKg <= 0 || purchaseRs <= 0) { alert('Please fill out all batch fields correctly.'); return; }
+      state.dressing.unshift({ id: 'BATCH_' + Date.now(), date, count, liveKg, dressedKg, purchaseRs, expRs, byProdRs, payMode });
+      saveState();
+      document.getElementById('drCount').value = '';
+      document.getElementById('drLiveKg').value = '';
+      document.getElementById('drDressedKg').value = '';
+      document.getElementById('drPurchaseRs').value = '';
+      document.getElementById('drExpRs').value = '0';
+      document.getElementById('drByProdRs').value = '0';
+      document.getElementById('goatWeightGridContainer').innerHTML = `<small class="text-muted">Enter live & dressed weight per goat after specifying goat count.</small>`;
+    }
+    function renderDressing() {
+      const tbody = document.getElementById('dressingTableBody');
+      if (state.dressing.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;">No livestock batches recorded.</td></tr>`;
+      } else {
+        tbody.innerHTML = state.dressing.map(d => {
+          const netCost = d.purchaseRs + d.expRs - d.byProdRs;
+          const landedCostPerKg = d.dressedKg > 0 ? (netCost / d.dressedKg).toFixed(1) : 0;
+          const yieldPct = d.liveKg > 0 ? ((d.dressedKg / d.liveKg) * 100).toFixed(1) : 0;
+          return `<tr>
+            <td><strong>${d.id}</strong><br><small>${d.date}</small></td>
+            <td>${d.count} Goats<br><small>${d.dressedKg} kg dressed</small></td>
+            <td><span class="badge badge-info">${yieldPct}%</span></td>
+            <td>₹${netCost.toLocaleString()}</td>
+            <td><strong>₹${landedCostPerKg} / kg</strong></td>
+            <td><button class="btn btn-sm btn-danger" onclick="deleteDressing('${d.id}')">🗑️</button></td>
+          </tr>`;
+        }).join('');
+      }
+      const select = document.getElementById('mortBatchId');
+      select.innerHTML = `<option value="">-- General Unlinked Loss --</option>` + state.dressing.map(d => `<option value="${d.id}">${d.id} (${d.date} - ${d.count} Goats)</option>`).join('');
+    }
+    function deleteDressing(id) {
+      if (confirm('Delete livestock batch? Profit & loss metrics will adjust.')) {
+        state.dressing = state.dressing.filter(d => d.id !== id);
+        saveState();
+      }
+    }
+
+    // ================== MORTALITY ==================
+    function addMortalityLoss() {
+      const date = document.getElementById('mortDate').value;
+      const batchId = document.getElementById('mortBatchId').value;
+      const count = parseInt(document.getElementById('mortCount').value) || 1;
+      const reason = document.getElementById('mortReason').value.trim();
+      const lossValue = parseFloat(document.getElementById('mortLossValue').value) || 0;
+      const recoveryAmt = parseFloat(document.getElementById('mortRecoveryAmt').value) || 0;
+      const recoveryMode = document.getElementById('mortRecoveryMode').value;
+      const deduct = document.getElementById('mortDeduct').checked;
+      if (lossValue <= 0) { alert('Please enter valid estimated loss value.'); return; }
+      state.livestockDeaths.unshift({ id: 'MORT_' + Date.now(), date, batchId, count, reason, lossValue, recoveryAmt, recoveryMode, deduct });
+      saveState();
+      document.getElementById('mortReason').value = '';
+      document.getElementById('mortLossValue').value = '';
+      document.getElementById('mortRecoveryAmt').value = '0';
+    }
+    function renderMortality() {
+      const tbody = document.getElementById('mortalityTableBody');
+      if (state.livestockDeaths.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;">No mortality events recorded.</td></tr>`;
+        return;
+      }
+      tbody.innerHTML = state.livestockDeaths.map(m => {
+        const netLoss = Math.max(0, m.lossValue - m.recoveryAmt);
+        return `<tr>
+          <td>${m.date}</td>
+          <td><strong>${esc(m.reason)}</strong><br><small>${m.batchId || 'Unlinked Batch'}</small></td>
+          <td>₹${m.lossValue.toLocaleString()}</td>
+          <td>₹${m.recoveryAmt.toLocaleString()} (${m.recoveryMode})</td>
+          <td><strong style="color:var(--danger);">₹${m.deduct ? netLoss.toLocaleString() : '0 (Excluded)'}</strong></td>
+          <td><button class="btn btn-sm btn-danger" onclick="deleteMortality('${m.id}')">🗑️</button></td>
+        </tr>`;
+      }).join('');
+    }
+    function deleteMortality(id) {
+      if (confirm('Delete mortality log entry?')) {
+        state.livestockDeaths = state.livestockDeaths.filter(m => m.id !== id);
+        saveState();
+      }
+    }
+
+    // ================== KHATA ==================
+    function renderKhata() {
+      const tbody = document.getElementById('khataTableBody');
+      const khataSummary = {};
+      state.sales.filter(s => s.mode === 'Credit').forEach(s => {
+        const name = s.cust;
+        if (!khataSummary[name]) khataSummary[name] = { cust: name, phone: s.phone, tier: s.tier, billed: 0, received: 0 };
+        khataSummary[name].billed += s.total;
+      });
+      state.receipts.forEach(r => {
+        if (!khataSummary[r.cust]) khataSummary[r.cust] = { cust: r.cust, phone: r.phone, tier: 'Retail', billed: 0, received: 0 };
+        khataSummary[r.cust].received += r.amt;
+      });
+      const keys = Object.keys(khataSummary);
+      if (keys.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;">No active customer khata records.</td></tr>`;
+        return;
+      }
+      tbody.innerHTML = keys.map(k => {
+        const item = khataSummary[k];
+        const balance = item.billed - item.received;
+        const formattedPhone = formatWaPhone(item.phone);
+        const waMsg = encodeURIComponent(`Hello ${item.cust}, friendly payment reminder from Mutton Babu. Total credit billed: Rs.${item.billed}, Payments received: Rs.${item.received}. Outstanding balance due: Rs.${balance}. Thank you!`);
+        const waUrl = formattedPhone ? `https://wa.me/${formattedPhone}?text=${waMsg}` : `https://wa.me/?text=${waMsg}`;
+        return `<tr>
+          <td><span class="link-cust" onclick="openCustomerHistory('${esc(item.cust)}')">${esc(item.cust)}</span></td>
+          <td>${esc(item.phone || '-')}</td>
+          <td><span class="badge badge-info">${esc(item.tier)}</span></td>
+          <td>₹${item.billed.toLocaleString()}</td>
+          <td>₹${item.received.toLocaleString()}</td>
+          <td><strong style="color:${balance > 0 ? 'var(--danger)' : 'var(--success)'}">₹${balance.toLocaleString()}</strong></td>
+          <td style="white-space:nowrap;">
+            <a href="${waUrl}" target="_blank" class="btn btn-sm btn-success">💬 WA</a>
+            <button class="btn btn-sm btn-warning" data-cust="${esc(item.cust)}" onclick="sendKhataReminderSms(this.dataset.cust)">📱 SMS</button>
+            <button class="btn btn-sm btn-primary" data-cust="${esc(item.cust)}" onclick="quickReceipt(this.dataset.cust)">Receipt</button>
+          </td>
+        </tr>`;
+      }).join('');
+    }
+    function openReceiptModal() {
+      const select = document.getElementById('recCustomer');
+      select.innerHTML = state.customers.map(c => `<option value="${esc(c.name)}">${esc(c.name)}</option>`).join('');
+      document.getElementById('receiptModal').classList.add('active');
+    }
+    function closeReceiptModal() { document.getElementById('receiptModal').classList.remove('active'); }
+    function quickReceipt(custName) {
+      openReceiptModal();
+      document.getElementById('recCustomer').value = custName;
+    }
+    function saveReceipt() {
+      const cust = document.getElementById('recCustomer').value;
+      const date = document.getElementById('recDate').value;
+      const amt = parseFloat(document.getElementById('recAmount').value) || 0;
+      const mode = document.getElementById('recMode').value;
+      const note = document.getElementById('recNote').value;
+      if (amt <= 0) return alert('Enter valid payment amount.');
+      const custObj = state.customers.find(c => c.name === cust);
+      state.receipts.unshift({ id: 'REC_' + Date.now(), date, cust, phone: custObj ? custObj.phone : '', amt, mode, note });
+      saveState();
+      closeReceiptModal();
+    }
+
+    // ================== CUSTOMER DATABASE ==================
+    function getCustomerRows() {
+      const map = new Map();
+      const ensure = (name, phone, tier) => {
+        if (!name) return null;
+        const key = name.trim().toLowerCase();
+        if (!key || key === 'walk-in customer') return null;
+        if (!map.has(key)) {
+          map.set(key, { key, id: null, name: name.trim(), phone: '', whatsapp: '', tier: tier || 'Retail', address: '', notes: '', orders: 0, spend: 0, lastDate: '', creditBilled: 0, creditPaid: 0 });
+        }
+        const row = map.get(key);
+        if (phone && !row.phone) row.phone = cleanPhone(phone);
+        if (tier) row.tier = tier;
+        return row;
+      };
+      state.customers.forEach(c => {
+        const row = ensure(c.name, c.phone, c.tier);
+        if (!row) return;
+        row.id = c.id;
+        row.whatsapp = cleanPhone(c.whatsapp) || cleanPhone(c.phone) || row.whatsapp;
+        row.address = c.address || row.address;
+        row.notes = c.notes || row.notes;
+      });
+      state.sales.forEach(s => {
+        const row = ensure(s.cust, s.phone, s.tier);
+        if (!row) return;
+        row.orders += 1;
+        row.spend += s.total;
+        if ((s.date || '') > row.lastDate) row.lastDate = s.date || '';
+        if (s.mode === 'Credit') row.creditBilled += s.total;
+        if (!row.whatsapp) row.whatsapp = row.phone;
+      });
+      state.receipts.forEach(r => {
+        const row = ensure(r.cust, r.phone, null);
+        if (!row) return;
+        row.creditPaid += r.amt;
+      });
+      return Array.from(map.values()).sort((a, b) => b.spend - a.spend || a.name.localeCompare(b.name));
+    }
+
+    function renderCustomers() {
+      customerRowsCache = getCustomerRows();
+      const totalEl = document.getElementById('custStatTotal');
+      if (!totalEl) return;
+
+      const withPhone = customerRowsCache.filter(r => cleanPhone(r.phone || r.whatsapp)).length;
+      const hotels = customerRowsCache.filter(r => r.tier === 'Wholesale').length;
+      const totalDue = customerRowsCache.reduce((sum, r) => sum + Math.max(0, r.creditBilled - r.creditPaid), 0);
+      totalEl.innerText = customerRowsCache.length;
+      document.getElementById('custStatPhones').innerText = withPhone;
+      document.getElementById('custStatHotels').innerText = hotels;
+      document.getElementById('custStatDue').innerText = `₹${Math.round(totalDue).toLocaleString()}`;
+
+      const validKeys = new Set(customerRowsCache.map(r => r.key));
+      Array.from(custSelection).forEach(k => { if (!validKeys.has(k)) custSelection.delete(k); });
+
+      const q = (document.getElementById('custSearch').value || '').trim().toLowerCase();
+      const tierF = document.getElementById('custTierFilter').value;
+      const view = customerRowsCache.filter(r => {
+        const matchQ = !q || r.name.toLowerCase().includes(q) || (r.phone || '').includes(q) || (r.notes || '').toLowerCase().includes(q);
+        const matchT = !tierF || r.tier === tierF;
+        return matchQ && matchT;
+      });
+
+      const tbody = document.getElementById('customerTableBody');
+      if (view.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;">No matching customers. Make a POS sale or add one manually.</td></tr>`;
+      } else {
+        tbody.innerHTML = view.map(r => {
+          const idx = customerRowsCache.indexOf(r);
+          const due = Math.max(0, Math.round(r.creditBilled - r.creditPaid));
+          const tierBadge = r.tier === 'Wholesale' ? 'badge-info' : (r.tier === 'Regular' ? 'badge-success' : 'badge-secondary');
+          return `<tr>
+            <td><input type="checkbox" data-key="${esc(r.key)}" ${custSelection.has(r.key) ? 'checked' : ''} onchange="toggleCustSelection(this.dataset.key, this.checked)"></td>
+            <td><strong>${esc(r.name)}</strong>${r.notes ? `<br><small class="text-muted">${esc(r.notes)}</small>` : ''}${r.address ? `<br><small class="text-muted">${esc(r.address)}</small>` : ''}</td>
+            <td>${esc(r.phone || '-')}${r.whatsapp && r.whatsapp !== r.phone ? `<br><small class="text-muted">WA: ${esc(r.whatsapp)}</small>` : ''}</td>
+            <td><span class="badge ${tierBadge}">${esc(r.tier)}</span></td>
+            <td>${r.orders}</td>
+            <td>₹${Math.round(r.spend).toLocaleString()}</td>
+            <td style="color:${due > 0 ? 'var(--danger)' : 'var(--success)'}; font-weight:700;">₹${due.toLocaleString()}</td>
+            <td>${r.lastDate || '-'}</td>
+            <td style="white-space:nowrap;">
+              <button class="btn btn-sm btn-info" title="View Purchase History" onclick="openCustomerHistory('${esc(r.name)}')">📜 History</button>
+              <button class="btn btn-sm btn-success" title="WhatsApp" onclick="customerSendWA(${idx})">💬</button>
+              <button class="btn btn-sm btn-warning" title="SMS" onclick="customerSendSMS(${idx})">📱</button>
+              <button class="btn btn-sm btn-secondary" title="Edit" onclick="editCustomerByIndex(${idx})">✏️</button>
+              <button class="btn btn-sm btn-danger" title="Delete" onclick="deleteCustomerByIndex(${idx})">🗑️</button>
+            </td>
+          </tr>`;
+        }).join('');
+      }
+      updateCustSelectionUI();
+    }
+
+    function updateCustSelectionUI() {
+      const countEl = document.getElementById('custSelectedCount');
+      if (countEl) countEl.innerText = `${custSelection.size} selected`;
+      const q = (document.getElementById('custSearch') ? document.getElementById('custSearch').value : '').trim().toLowerCase();
+      const tierF = document.getElementById('custTierFilter') ? document.getElementById('custTierFilter').value : '';
+      const view = customerRowsCache.filter(r => {
+        const matchQ = !q || r.name.toLowerCase().includes(q) || (r.phone || '').includes(q) || (r.notes || '').toLowerCase().includes(q);
+        const matchT = !tierF || r.tier === tierF;
+        return matchQ && matchT;
+      });
+      const selAll = document.getElementById('custSelectAll');
+      if (selAll) selAll.checked = view.length > 0 && view.every(r => custSelection.has(r.key));
+    }
+
+    function toggleCustSelection(key, checked) {
+      if (checked) custSelection.add(key); else custSelection.delete(key);
+      updateCustSelectionUI();
+    }
+    function toggleSelectAll(checked) {
+      const q = (document.getElementById('custSearch').value || '').trim().toLowerCase();
+      const tierF = document.getElementById('custTierFilter').value;
+      customerRowsCache.forEach(r => {
+        const matchQ = !q || r.name.toLowerCase().includes(q) || (r.phone || '').includes(q) || (r.notes || '').toLowerCase().includes(q);
+        const matchT = !tierF || r.tier === tierF;
+        if (!(matchQ && matchT)) return;
+        if (checked) custSelection.add(r.key); else custSelection.delete(r.key);
+      });
+      renderCustomers();
+    }
+    function getSelectedCustomerRows() {
+      return customerRowsCache.filter(r => custSelection.has(r.key));
+    }
+    function copySelectedNumbers() {
+      const rows = getSelectedCustomerRows();
+      if (!rows.length) return alert('No customers selected.');
+      const numbers = rows.map(r => cleanPhone(r.whatsapp || r.phone)).filter(Boolean).map(p => '+91' + (p.length > 10 ? p.slice(-10) : p)).join(', ');
+      if (!numbers) return alert('Selected customers have no phone numbers saved.');
+      navigator.clipboard.writeText(numbers).then(() => alert('Copied numbers: ' + numbers)).catch(() => prompt('Copy numbers manually:', numbers));
+    }
+
+    function saveManualCustomer() {
+      const name = document.getElementById('mcName').value.trim();
+      const phone = cleanPhone(document.getElementById('mcPhone').value);
+      const whatsapp = cleanPhone(document.getElementById('mcWa').value) || phone;
+      const tier = document.getElementById('mcTier').value;
+      const address = document.getElementById('mcAddress').value.trim();
+      const notes = document.getElementById('mcNotes').value.trim();
+      if (!name) return alert('Enter customer name.');
+      const key = name.toLowerCase();
+      let cust = state.customers.find(c => c.name.trim().toLowerCase() === key);
+      let updated = false;
+      if (cust) { updated = true; }
+      else {
+        cust = { id: 'CUST_' + Date.now(), createdAt: new Date().toISOString() };
+        state.customers.push(cust);
+      }
+      cust.name = name; cust.phone = phone; cust.whatsapp = whatsapp; cust.tier = tier; cust.address = address; cust.notes = notes;
+      saveState();
+      ['mcName', 'mcPhone', 'mcWa', 'mcAddress', 'mcNotes'].forEach(id => document.getElementById(id).value = '');
+      alert(updated ? 'Existing customer record updated.' : 'Customer added to database.');
+    }
+
+    function editCustomerByIndex(i) {
+      const row = customerRowsCache[i];
+      if (!row) return;
+      editingCustomerKey = row.key;
+      document.getElementById('editModalTitle').innerText = 'Edit Customer: ' + row.name;
+      const tiers = ['Retail', 'Regular', 'Wholesale'];
+      const tierOptions = tiers.map(t => '<option ' + (row.tier === t ? 'selected' : '') + '>' + t + '</option>').join('');
+      document.getElementById('editModalBody').innerHTML = `
+        <div class="form-group"><label>Name</label><input id="editCustName" class="form-control" value="${esc(row.name)}"></div>
+        <div class="form-row">
+          <div class="form-group"><label>Phone (SMS)</label><input id="editCustPhone" class="form-control" value="${esc(row.phone || '')}"></div>
+          <div class="form-group"><label>WhatsApp No</label><input id="editCustWa" class="form-control" value="${esc(row.whatsapp || '')}"></div>
+        </div>
+        <div class="form-group"><label>Tier</label><select id="editCustTier" class="form-control">${tierOptions}</select></div>
+        <div class="form-group"><label>Address / Area</label><input id="editCustAddress" class="form-control" value="${esc(row.address || '')}"></div>
+        <div class="form-group"><label>Notes</label><input id="editCustNotes" class="form-control" value="${esc(row.notes || '')}"></div>
+        <button class="btn btn-primary btn-block" onclick="saveCustomerEdit()">Save Changes</button>`;
+      document.getElementById('editModal').classList.add('active');
+    }
+    function closeEditModal() {
+      document.getElementById('editModal').classList.remove('active');
+      editingCustomerKey = null;
+    }
+    function saveCustomerEdit() {
+      const key = editingCustomerKey;
+      if (!key) return;
+      const newName = document.getElementById('editCustName').value.trim();
+      if (!newName) return alert('Name is required.');
+      const phone = cleanPhone(document.getElementById('editCustPhone').value);
+      const whatsapp = cleanPhone(document.getElementById('editCustWa').value) || phone;
+      const tier = document.getElementById('editCustTier').value;
+      const address = document.getElementById('editCustAddress').value.trim();
+      const notes = document.getElementById('editCustNotes').value.trim();
+
+      let cust = state.customers.find(c => c.name.trim().toLowerCase() === key);
+      const oldRow = customerRowsCache.find(r => r.key === key);
+      if (!cust) {
+        cust = { id: 'CUST_' + Date.now(), createdAt: new Date().toISOString() };
+        state.customers.push(cust);
+      }
+      cust.name = newName; cust.phone = phone; cust.whatsapp = whatsapp; cust.tier = tier; cust.address = address; cust.notes = notes;
+
+      const newKey = newName.toLowerCase();
+      if (newKey !== key) {
+        state.sales.forEach(s => {
+          if (s.cust && s.cust.trim().toLowerCase() === key) {
+            s.cust = newName;
+            if (!s.phone && phone) s.phone = phone;
+          }
+        });
+        state.receipts.forEach(r => {
+          if (r.cust && r.cust.trim().toLowerCase() === key) {
+            r.cust = newName;
+            if (!r.phone && phone) r.phone = phone;
+          }
+        });
+        custSelection.delete(key);
+      }
+      document.getElementById('editModal').classList.remove('active');
+      editingCustomerKey = null;
+      saveState();
+    }
+    function deleteCustomerByIndex(i) {
+      const row = customerRowsCache[i];
+      if (!row) return;
+      if (!confirm(`Delete "${row.name}" from the customer database?\n\nSales history and khata entries will remain intact.`)) return;
+      state.customers = state.customers.filter(c => c.name.trim().toLowerCase() !== row.key);
+      custSelection.delete(row.key);
+      saveState();
+    }
+
+    // ================== MESSAGING ENGINE ==================
+    function getDefaultTemplate(channel) {
+      if (channel === 'sms') {
+        return 'Namaste {name}, Mutton Babu: Fresh mutton available today. Retail Rs.750/kg, Hotel Rs.680/kg. Home delivery available. Order now!';
+      }
+      return 'Namaste {name} 🙏\nFresh mutton available today at Mutton Babu!\nRetail ₹750/kg • Regular ₹720 • Hotel ₹680\n📦 Home delivery available\nOrder now!';
+    }
+    function personalize(template, row) {
+      const due = Math.max(0, Math.round(row.creditBilled - row.creditPaid));
+      return template
+        .replace(/\{name\}/gi, (row.name || '').split(' ')[0])
+        .replace(/\{balance\}/gi, 'Rs.' + due)
+        .replace(/\{spend\}/gi, 'Rs.' + Math.round(row.spend))
+        .replace(/\{orders\}/gi, String(row.orders))
+        .replace(/\{tier\}/gi, row.tier || 'Retail');
+    }
+    function getBulkTemplate() {
+      const el = document.getElementById('bulkMsgText');
+      const v = el ? el.value.trim() : '';
+      return v || getDefaultTemplate('wa');
+    }
+    function updateBulkCounter() {
+      const el = document.getElementById('bulkMsgText');
+      const c = document.getElementById('bulkMsgCounter');
+      if (!el || !c) return;
+      const len = el.value.length;
+      const parts = Math.max(1, Math.ceil(len / 160));
+      c.innerText = `${len} chars • ~${parts} SMS part(s)`;
+    }
+    function insertPh(ph) {
+      const el = document.getElementById('bulkMsgText');
+      if (!el) return;
+      el.value = (el.value ? el.value + ' ' : '') + ph;
+      updateBulkCounter();
+      el.focus();
+    }
+
+    function startBroadcast(channel) {
+      const rows = getSelectedCustomerRows();
+      if (!rows.length) return alert('Select at least one customer using the checkboxes.');
+      const template = getBulkTemplate();
+      msgQueue = {
+        channel, idx: 0, sent: 0, skipped: 0, logged: false, template,
+        sentNames: [],
+        items: rows.map(r => ({ ...r, message: personalize(template, r) }))
+      };
+      document.getElementById('msgQueueModal').classList.add('active');
+      renderQueueStep();
+    }
+    function startBulkWhatsApp() { startBroadcast('wa'); }
+    function startBulkSms() { startBroadcast('sms'); }
+
+    function renderQueueStep() {
+      if (!msgQueue) return;
+      const total = msgQueue.items.length;
+      const progress = document.getElementById('msgQueueProgress');
+      const body = document.getElementById('msgQueueBody');
+      const actions = document.getElementById('msgQueueActions');
+      document.getElementById('msgQueueTitle').innerText = msgQueue.channel === 'wa' ? 'WhatsApp Broadcast Queue' : 'SMS Broadcast Queue';
+
+      if (msgQueue.idx >= total) {
+        progress.innerHTML = `<span class="badge badge-success">Complete</span>`;
+        body.innerHTML = `
+          <div style="text-align:center; padding:1.5rem 0;">
+            <div style="font-size:2rem;">✅</div>
+            <p style="margin-top:8px;"><strong>Broadcast finished.</strong></p>
+            <p style="color:var(--text-muted); font-size:0.9rem;">Sent: ${msgQueue.sent} • Skipped: ${msgQueue.skipped} • Total: ${total}</p>
+          </div>`;
+        actions.innerHTML = `<button class="btn btn-primary btn-block" onclick="closeMsgQueue()">Done</button>`;
+        return;
+      }
+
+      const item = msgQueue.items[msgQueue.idx];
+      const due = Math.max(0, Math.round(item.creditBilled - item.creditPaid));
+      progress.innerHTML = `Recipient <strong>${msgQueue.idx + 1}</strong> of ${total} &nbsp; <span class="badge badge-success">Sent: ${msgQueue.sent}</span> <span class="badge badge-secondary">Skipped: ${msgQueue.skipped}</span>`;
+      body.innerHTML = `
+        <div style="background:#f8f9fa; padding:10px; border-radius:6px; margin-bottom:10px; font-size:0.9rem;">
+          <strong>${esc(item.name)}</strong> • ${esc(item.phone || item.whatsapp || 'No phone')}<br>
+          <small class="text-muted">Tier: ${esc(item.tier)} • Orders: ${item.orders} • Spend: ₹${Math.round(item.spend).toLocaleString()} • Khata Due: ₹${due.toLocaleString()}</small>
+        </div>
+        <div class="form-group">
+          <label>Message (editable for this recipient)</label>
+          <textarea id="msgQueueText" class="form-control" rows="4">${esc(item.message)}</textarea>
+        </div>`;
+      actions.innerHTML = `
+        <button class="btn btn-success" onclick="queueSendCurrent()">${msgQueue.channel === 'wa' ? '💬 Open WhatsApp & Send' : '📱 Open SMS App & Send'}</button>
+        <button class="btn btn-secondary" onclick="queueSkip()">⏭ Skip</button>
+        <button class="btn btn-info" onclick="queueCopyCurrent()">📋 Copy</button>
+        <button class="btn btn-danger" onclick="closeMsgQueue()">Close</button>`;
+    }
+    function queueSendCurrent() {
+      if (!msgQueue || msgQueue.idx >= msgQueue.items.length) return;
+      const item = msgQueue.items[msgQueue.idx];
+      const textEl = document.getElementById('msgQueueText');
+      const message = textEl ? (textEl.value.trim() || item.message) : item.message;
+      const phone = item.whatsapp || item.phone;
+      if (msgQueue.channel === 'wa') {
+        if (!cleanPhone(phone)) { alert('No phone number for this customer.'); return; }
+        window.open(`https://wa.me/${formatWaPhone(phone)}?text=${encodeURIComponent(message)}`, '_blank');
+      } else {
+        if (!cleanPhone(phone)) { alert('No phone number for this customer.'); return; }
+        openSmsLink(phone, message);
+      }
+      msgQueue.sent++;
+      msgQueue.sentNames.push(item.name);
+      msgQueue.idx++;
+      renderQueueStep();
+    }
+    function queueSkip() {
+      if (!msgQueue) return;
+      msgQueue.skipped++;
+      msgQueue.idx++;
+      renderQueueStep();
+    }
+    function queueCopyCurrent() {
+      if (!msgQueue || msgQueue.idx >= msgQueue.items.length) return;
+      const item = msgQueue.items[msgQueue.idx];
+      const textEl = document.getElementById('msgQueueText');
+      const message = textEl ? (textEl.value.trim() || item.message) : item.message;
+      const phone = cleanPhone(item.whatsapp || item.phone);
+      const out = (phone ? '+91' + (phone.length > 10 ? phone.slice(-10) : phone) + '\n' : '') + message;
+      navigator.clipboard.writeText(out).then(() => alert('Copied message.')).catch(() => prompt('Copy manually:', out));
+    }
+    function finalizeQueue() {
+      if (!msgQueue || msgQueue.logged) return;
+      msgQueue.logged = true;
+      if (msgQueue.sent > 0) {
+        logCampaign(msgQueue.channel === 'wa' ? 'WhatsApp' : 'SMS', msgQueue.template, msgQueue.sent, msgQueue.sentNames);
+      }
+    }
+    function closeMsgQueue() {
+      finalizeQueue();
+      document.getElementById('msgQueueModal').classList.remove('active');
+      msgQueue = null;
+    }
+
+    function customerSendWA(i) {
+      const r = customerRowsCache[i];
+      if (!r) return;
+      const phone = r.whatsapp || r.phone;
+      if (!cleanPhone(phone)) return alert('No phone number saved for this customer.');
+      const msg = personalize(getDefaultTemplate('wa'), r);
+      window.open(`https://wa.me/${formatWaPhone(phone)}?text=${encodeURIComponent(msg)}`, '_blank');
+    }
+    function customerSendSMS(i) {
+      const r = customerRowsCache[i];
+      if (!r) return;
+      const phone = r.phone || r.whatsapp;
+      if (!cleanPhone(phone)) return alert('No phone number saved for this customer.');
+      openSmsLink(phone, personalize(getDefaultTemplate('sms'), r));
+    }
+    function sendKhataReminderSms(custName) {
+      const row = getCustomerRows().find(r => r.key === custName.trim().toLowerCase());
+      const due = row ? Math.max(0, Math.round(row.creditBilled - row.creditPaid)) : 0;
+      const phone = row ? (row.phone || row.whatsapp) : '';
+      if (!cleanPhone(phone)) return alert('No phone number on record for this customer. Add it in the Customer Database tab.');
+      const msg = `Namaste ${custName}, payment reminder from Mutton Babu: outstanding khata balance is Rs.${due}. Kindly clear at the earliest. Thank you!`;
+      openSmsLink(phone, msg);
+    }
+
+    function logCampaign(channel, message, count, names) {
+      state.msgLogs = state.msgLogs || [];
+      state.msgLogs.unshift({
+        id: 'MSG_' + Date.now() + Math.random().toString(36).slice(2, 6),
+        date: new Date().toLocaleString([], { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }),
+        channel: channel,
+        count: count,
+        names: (names || []).join(', '),
+        message: (message || '').slice(0, 160)
+      });
+      if (state.msgLogs.length > 50) state.msgLogs.length = 50;
+      saveState();
+    }
+    function renderCampaignLog() {
+      const tbody = document.getElementById('campaignLogBody');
+      if (!tbody) return;
+      if (!state.msgLogs || !state.msgLogs.length) {
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;">No campaigns sent yet.</td></tr>`;
+        return;
+      }
+      tbody.innerHTML = state.msgLogs.map(m => `
+        <tr>
+          <td>${esc(m.date)}</td>
+          <td><span class="badge ${m.channel.includes('WhatsApp') ? 'badge-success' : 'badge-warning'}">${esc(m.channel)}</span></td>
+          <td><small>${esc(m.names || '-')}</small></td>
+          <td>${m.count}</td>
+          <td><small>${esc(m.message)}</small></td>
+          <td><button class="btn btn-sm btn-danger" onclick="deleteCampaignLog('${m.id}')">🗑️</button></td>
+        </tr>`).join('');
+    }
+    function deleteCampaignLog(id) {
+      state.msgLogs = state.msgLogs.filter(m => m.id !== id);
+      saveState();
+    }
+
+    // ================== LABOUR ==================
+    function registerWorker() {
+      const name = document.getElementById('labourName').value.trim();
+      const phone = cleanPhone(document.getElementById('labourPhone').value);
+      const aadhaar = document.getElementById('labourAadhaar').value.trim();
+      const verify = document.getElementById('labourVerify').value;
+      if (!name) return alert('Enter worker name.');
+      state.labourers.push({ id: 'LAB_' + Date.now(), name, phone, aadhaar, verify });
+      saveState();
+      document.getElementById('labourName').value = '';
+      document.getElementById('labourPhone').value = '';
+      document.getElementById('labourAadhaar').value = '';
+    }
+    function addWagePayment() {
+      const workerId = document.getElementById('wageWorkerId').value;
+      const date = document.getElementById('wageDate').value;
+      const type = document.getElementById('wageType').value;
+      const amount = parseFloat(document.getElementById('wageAmount').value) || 0;
+      const mode = document.getElementById('wageMode').value;
+      const note = document.getElementById('wageNote').value.trim();
+      if (amount <= 0 || !workerId) return alert('Fill wage payment details.');
+      const worker = state.labourers.find(l => l.id === workerId);
+      state.wages.unshift({ id: 'WAGE_' + Date.now(), date, workerId, worker: worker ? worker.name : 'Unknown', type, amount, mode, note });
+      saveState();
+      document.getElementById('wageAmount').value = '';
+      document.getElementById('wageNote').value = '';
+    }
+    function renderLabour() {
+      const select = document.getElementById('wageWorkerId');
+      select.innerHTML = state.labourers.map(l => `<option value="${l.id}">${esc(l.name)} (${esc(l.verify)})</option>`).join('');
+      const tbody = document.getElementById('wagesTableBody');
+      if (state.wages.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;">No wage payments recorded.</td></tr>`;
+        return;
+      }
+      tbody.innerHTML = state.wages.map(w => `
+        <tr>
+          <td>${w.date}</td>
+          <td><strong>${esc(w.worker)}</strong></td>
+          <td><span class="badge badge-secondary">${esc(w.type)}</span></td>
+          <td>₹${w.amount.toLocaleString()}</td>
+          <td>${w.mode}</td>
+          <td><button class="btn btn-sm btn-danger" onclick="deleteWage('${w.id}')">🗑️</button></td>
+        </tr>`).join('');
+    }
+    function deleteWage(id) {
+      if (confirm('Delete wage payment?')) {
+        state.wages = state.wages.filter(w => w.id !== id);
+        saveState();
+      }
+    }
+
+    // ================== EXPENSES & CONTRA ==================
+    function addExpense() {
+      const date = document.getElementById('expDate').value;
+      const category = document.getElementById('expCategory').value;
+      const amount = parseFloat(document.getElementById('expAmount').value) || 0;
+      const mode = document.getElementById('expMode').value;
+      const note = document.getElementById('expNote').value.trim();
+      if (amount <= 0) return alert('Enter valid expense amount.');
+      state.expenses.unshift({ id: 'EXP_' + Date.now(), date, category, amount, mode, note });
+      saveState();
+      document.getElementById('expAmount').value = '';
+      document.getElementById('expNote').value = '';
+    }
+    function addContraTransfer() {
+      const date = document.getElementById('contraDate').value;
+      const direction = document.getElementById('contraDirection').value;
+      const amount = parseFloat(document.getElementById('contraAmount').value) || 0;
+      const note = document.getElementById('contraNote').value.trim();
+      if (amount <= 0) return alert('Enter valid transfer amount.');
+      state.contraTransfers.unshift({ id: 'CONTRA_' + Date.now(), date, direction, amount, note });
+      saveState();
+      document.getElementById('contraAmount').value = '';
+      document.getElementById('contraNote').value = '';
+    }
+    function renderExpenses() {
+      const tbody = document.getElementById('expensesTableBody');
+      const combined = [
+        ...state.expenses.map(e => ({ ...e, recordType: 'Expense' })),
+        ...state.contraTransfers.map(c => ({ ...c, recordType: 'Contra' }))
+      ].sort((a, b) => new Date(b.date) - new Date(a.date));
+      if (combined.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;">No expense or transfer records found.</td></tr>`;
+        return;
+      }
+      tbody.innerHTML = combined.map(item => {
+        if (item.recordType === 'Expense') {
+          return `<tr>
+            <td>${item.date}</td>
+            <td><span class="badge badge-warning">Expense</span> ${esc(item.category)}</td>
+            <td>${esc(item.note || '-')}</td>
+            <td><strong>₹${item.amount.toLocaleString()}</strong></td>
+            <td>${item.mode}</td>
+            <td><button class="btn btn-sm btn-danger" onclick="deleteExpense('${item.id}')">🗑️</button></td>
+          </tr>`;
+        }
+        const dirLabel = item.direction === 'CashToBank' ? 'Cash ➔ Bank (Deposit)' : 'Bank ➔ Cash (ATM)';
+        return `<tr>
+          <td>${item.date}</td>
+          <td><span class="badge badge-info">Contra</span> Transfer</td>
+          <td>${esc(item.note || '-')}</td>
+          <td><strong>₹${item.amount.toLocaleString()}</strong></td>
+          <td>${dirLabel}</td>
+          <td><button class="btn btn-sm btn-danger" onclick="deleteContra('${item.id}')">🗑️</button></td>
+        </tr>`;
+      }).join('');
+    }
+    function deleteExpense(id) {
+      if (confirm('Delete expense log?')) {
+        state.expenses = state.expenses.filter(e => e.id !== id);
+        saveState();
+      }
+    }
+    function deleteContra(id) {
+      if (confirm('Delete contra transfer?')) {
+        state.contraTransfers = state.contraTransfers.filter(c => c.id !== id);
+        saveState();
+      }
+    }
+
+    // ================== CAPITAL & LOANS ==================
+    function addCapitalEntry() {
+      const partner = document.getElementById('capPartner').value;
+      const type = document.getElementById('capType').value;
+      const date = document.getElementById('capDate').value;
+      const amount = parseFloat(document.getElementById('capAmount').value) || 0;
+      const mode = document.getElementById('capMode').value;
+      const note = document.getElementById('capNote').value.trim();
+      if (amount <= 0) return alert('Enter valid amount.');
+      if (type === 'Contribution') {
+        state.capital.push({ id: 'CAP_' + Date.now(), partner, date, amount, mode, note });
+      } else {
+        state.capitalWithdrawals.push({ id: 'WITH_' + Date.now(), partner, date, amount, mode, note });
+      }
+      saveState();
+      document.getElementById('capAmount').value = '';
+    }
+    function addLoan() {
+      const lender = document.getElementById('loanLender').value.trim();
+      const date = document.getElementById('loanDate').value;
+      const amount = parseFloat(document.getElementById('loanAmount').value) || 0;
+      const rate = parseFloat(document.getElementById('loanRate').value) || 0;
+      if (amount <= 0 || !lender) return alert('Fill loan details.');
+      state.loans.push({ id: 'LOAN_' + Date.now(), lender, date, amount, rate });
+      saveState();
+      document.getElementById('loanLender').value = '';
+      document.getElementById('loanAmount').value = '';
+    }
+    function addLoanRepayment() {
+      const loanId = document.getElementById('repayLoanId').value;
+      const date = document.getElementById('repayDate').value;
+      const principal = parseFloat(document.getElementById('repayPrincipal').value) || 0;
+      const interest = parseFloat(document.getElementById('repayInterest').value) || 0;
+      const mode = document.getElementById('repayMode').value;
+      if ((principal + interest) <= 0 || !loanId) return alert('Enter repayment details.');
+      state.loanRepayments.push({ id: 'REPAY_' + Date.now(), loanId, date, principal, interest, mode });
+      saveState();
+      document.getElementById('repayPrincipal').value = '';
+      document.getElementById('repayInterest').value = '0';
+    }
+    function renderCapital() {
+      const partners = ['Partner A', 'Partner B', 'Partner C'];
+      let grandNetCap = 0;
+      const partnerData = partners.map(p => {
+        const capIn = state.capital.filter(c => c.partner === p).reduce((sum, c) => sum + c.amount, 0);
+        const capOut = state.capitalWithdrawals.filter(c => c.partner === p).reduce((sum, c) => sum + c.amount, 0);
+        const net = capIn - capOut;
+        grandNetCap += net;
+        return { partner: p, net };
+      });
+      const summaryBody = document.getElementById('partnerCapitalSummaryBody');
+      summaryBody.innerHTML = partnerData.map(pd => {
+        const ratio = grandNetCap > 0 ? ((pd.net / grandNetCap) * 100).toFixed(1) : '0.0';
+        return `<tr>
+          <td><strong>${pd.partner}</strong></td>
+          <td>₹${pd.net.toLocaleString()}</td>
+          <td><span class="badge badge-info">${ratio}% Equity</span></td>
+        </tr>`;
+      }).join('');
+      const loanSelect = document.getElementById('repayLoanId');
+      loanSelect.innerHTML = state.loans.map(l => {
+        const repaid = state.loanRepayments.filter(r => r.loanId === l.id).reduce((sum, r) => sum + r.principal, 0);
+        const bal = Math.max(0, l.amount - repaid);
+        return `<option value="${l.id}">${esc(l.lender)} (Bal: ₹${bal.toLocaleString()})</option>`;
+      }).join('');
+    }
+
+    // ================== REPORTS ==================
+    function renderReports() {
+      const period = document.getElementById('reportFilterPeriod').value;
+      const now = new Date();
+      const filterDate = (dateStr) => {
+        if (period === 'all') return true;
+        const d = new Date(dateStr);
+        if (period === 'today') return d.toDateString() === now.toDateString();
+        if (period === 'month') return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+        if (period === 'year') return d.getFullYear() === now.getFullYear();
+        if (period === 'week') {
+          const diffDays = Math.ceil(Math.abs(now - d) / (1000 * 60 * 60 * 24));
+          return diffDays <= 7;
+        }
+        return true;
+      };
+      const sales = state.sales.filter(s => filterDate(s.date));
+      const deaths = state.livestockDeaths.filter(d => filterDate(d.date));
+      const dressing = state.dressing.filter(d => filterDate(d.date));
+      const wages = state.wages.filter(w => filterDate(w.date));
+      const expenses = state.expenses.filter(e => filterDate(e.date));
+      const loanRepays = state.loanRepayments.filter(l => filterDate(l.date));
+
+      const revMeatSales = sales.reduce((sum, s) => sum + Math.round(s.qty * s.rate), 0);
+      const revDelivery = sales.reduce((sum, s) => sum + (s.deliveryFee || 0), 0);
+      const revSalvage = deaths.reduce((sum, d) => sum + d.recoveryAmt, 0);
+      const totalRev = revMeatSales + revDelivery + revSalvage;
+
+      const costCOGS = dressing.reduce((sum, d) => sum + (d.purchaseRs + d.expRs - d.byProdRs), 0);
+      const costWages = wages.reduce((sum, w) => sum + w.amount, 0);
+      const costExpenses = expenses.reduce((sum, e) => sum + e.amount, 0);
+      const costMortality = deaths.reduce((sum, d) => d.deduct !== false ? sum + Math.max(0, d.lossValue - d.recoveryAmt) : sum, 0);
+      const costInterest = loanRepays.reduce((sum, l) => sum + l.interest, 0);
+      const totalExp = costCOGS + costWages + costExpenses + costMortality + costInterest;
+      const netProfit = totalRev - totalExp;
+
+      document.getElementById('repRevSales').innerText = `₹${revMeatSales.toLocaleString()}`;
+      document.getElementById('repRevDelivery').innerText = `₹${revDelivery.toLocaleString()}`;
+      document.getElementById('repRevSalvage').innerText = `₹${revSalvage.toLocaleString()}`;
+      document.getElementById('repTotalRev').innerText = `₹${totalRev.toLocaleString()}`;
+      document.getElementById('repCostCOGS').innerText = `₹${costCOGS.toLocaleString()}`;
+      document.getElementById('repCostWages').innerText = `₹${costWages.toLocaleString()}`;
+      document.getElementById('repCostExpenses').innerText = `₹${costExpenses.toLocaleString()}`;
+      document.getElementById('repCostMortality').innerText = `₹${costMortality.toLocaleString()}`;
+      document.getElementById('repCostInterest').innerText = `₹${costInterest.toLocaleString()}`;
+      document.getElementById('repTotalExp').innerText = `₹${totalExp.toLocaleString()}`;
+      const resultEl = document.getElementById('repNetProfitResult');
+      resultEl.innerText = `₹${netProfit.toLocaleString()}`;
+      resultEl.style.color = netProfit >= 0 ? 'var(--success)' : 'var(--danger)';
+    }
+
+    // ================== FREEZER AUDIT & CHART ==================
+    function logFreezerAudit() {
+      const derived = computeDerivedBalances();
+      const actualInput = prompt(`Enter Actual Physical Freezer Stock Weight (Kg):\nSystem Stock Calculated: ${derived.estMeatStock.toFixed(1)} kg`);
+      if (actualInput !== null) {
+        const actualKg = parseFloat(actualInput) || 0;
+        state.freezerAudits.unshift({
+          date: new Date().toISOString().split('T')[0],
+          sysKg: derived.estMeatStock,
+          actKg: actualKg,
+          variance: actualKg - derived.estMeatStock
+        });
+        saveState();
+      }
+    }
+    function renderFreezerAuditTable() {
+      const tbody = document.getElementById('freezerAuditTableBody');
+      if (!state.freezerAudits || state.freezerAudits.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;">No audit records logged yet.</td></tr>`;
+        return;
+      }
+      tbody.innerHTML = state.freezerAudits.map(a => `
+        <tr>
+          <td>${a.date}</td>
+          <td>${a.sysKg.toFixed(1)} kg</td>
+          <td><strong>${a.actKg.toFixed(1)} kg</strong></td>
+          <td><span class="badge ${a.variance < 0 ? 'badge-danger' : 'badge-success'}">${a.variance.toFixed(1)} kg</span></td>
+        </tr>`).join('');
+    }
+    function drawProfitTrendChart() {
+      const canvas = document.getElementById('profitTrendCanvas');
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = "#666";
+      ctx.font = "12px Segoe UI";
+      ctx.fillText("Cumulative Profit / Loss Performance Trend", 15, 25);
+      const derived = computeDerivedBalances();
+      ctx.beginPath();
+      ctx.moveTo(30, 150);
+      ctx.lineTo(150, 120);
+      ctx.lineTo(270, 80);
+      ctx.lineTo(380, derived.netProfit >= 0 ? 40 : 160);
+      ctx.strokeStyle = derived.netProfit >= 0 ? "#27ae60" : "#c0392b";
+      ctx.lineWidth = 3;
+      ctx.stroke();
+      ctx.fillStyle = derived.netProfit >= 0 ? "#27ae60" : "#c0392b";
+      ctx.beginPath();
+      ctx.arc(380, derived.netProfit >= 0 ? 40 : 160, 6, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // ================== BACKUP & CLOUD ==================
+    function exportBackupJSON() {
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(state, null, 2));
+      const a = document.createElement('a');
+      a.setAttribute("href", dataStr);
+      a.setAttribute("download", `mutton_babu_erp_backup_${new Date().toISOString().split('T')[0]}.json`);
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+    }
+    function importBackupJSON() {
+      const fileInput = document.getElementById('importFileInput');
+      if (!fileInput.files.length) return alert('Select JSON file to restore.');
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          const imported = JSON.parse(e.target.result);
+          if (confirm('Overwrites current database with backup data. Continue?')) {
+            state = { ...state, ...imported };
+            state.meta = { driveClientId: '', driveFileId: null, lastBackup: null, ...(imported.meta || {}) };
+            state.msgLogs = state.msgLogs || [];
+            saveState();
+            alert('Database restored successfully!');
+          }
+        } catch (err) { alert('Invalid backup file format.'); }
+      };
+      reader.readAsText(fileInput.files[0]);
+    }
+    function saveDriveConfig() {
+      state.meta.driveClientId = document.getElementById('driveClientId').value.trim();
+      saveState();
+      alert('Google Drive Client ID configured.');
+    }
+    function openDriveAuth() {
+      if (!state.meta.driveClientId) {
+        alert('Please enter your Google OAuth Client ID in Settings first.');
+        switchTab('settings');
+        return;
+      }
+      try {
+        const client = google.accounts.oauth2.initTokenClient({
+          client_id: state.meta.driveClientId,
+          scope: 'https://www.googleapis.com/auth/drive.file',
+          callback: (tokenResponse) => {
+            if (tokenResponse.access_token) uploadToDrive(tokenResponse.access_token);
+          },
+        });
+        client.requestAccessToken();
+      } catch (e) {
+        alert('Google Drive Auth client error. Verify Client ID.');
+      }
+    }
+    function uploadToDrive(accessToken) {
+      const fileData = new Blob([JSON.stringify(state)], { type: 'application/json' });
+      const metadata = { name: 'mutton_babu_erp_backup.json', mimeType: 'application/json' };
+      const form = new FormData();
+      form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
+      form.append('file', fileData);
+      fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
+        method: 'POST',
+        headers: new Headers({ 'Authorization': 'Bearer ' + accessToken }),
+        body: form,
+      })
+        .then(res => res.json())
+        .then(() => {
+          document.getElementById('syncStatus').innerText = 'Cloud Synced';
+          document.getElementById('syncStatus').className = 'badge badge-success';
+          alert('ERP Backup successfully synced to Google Drive!');
+        })
+        .catch(err => alert('Cloud Sync error: ' + err));
+    }
+    function syncToGoogleDrive() { openDriveAuth(); }
+
+    // ================== INIT ==================
+    window.onload = function() {
+      loadState();
+      renderAll();
+      applyTierRate();
+    };
+  </script>
+</body>
+</html>
+```
